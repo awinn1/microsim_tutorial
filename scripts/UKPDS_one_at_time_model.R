@@ -1,5 +1,5 @@
 
-library(pacman, tidyverse)
+library(pacman)
 pacman::p_load(haven,
                Rcpp,
                RcppArmadillo,
@@ -67,7 +67,7 @@ a_coef_C[,23,1]<-UKPDS_coef$death_1st_event
 a_coef_C[,24,1]<-UKPDS_coef$death_yhne
 a_coef_C[,25,1]<-UKPDS_coef$death_yhye
 
-print(dim(a_coef_C)) # to verify the dimensions, 61 rows, 25 columns, 1 slice
+print(dim(a_coef_C)) # to verify the dimensions, 65 rows, 25 columns, 1 slice
 print(dimnames(a_coef_C)) # to verify the dimension names
 
 # Step 2: Create the patient dataset
@@ -104,6 +104,7 @@ print(dimnames(m_TR)) # to verify the dimension names
 #' @return The updated matrix with initialized patient data.
 #' @export
 initialize_patients <- function(num_patients, ukpds_pop, m_TR) {
+#  patient<- 1
   patient<- num_patients 
     m_TR[patient, "age"] <- as.matrix(ukpds_pop[patient, "age"])
     m_TR[patient, "age_diag"] <- as.matrix(ukpds_pop[patient, "age_diag"])
@@ -124,27 +125,32 @@ initialize_patients <- function(num_patients, ukpds_pop, m_TR) {
     m_TR[patient, "egfr"] <- as.matrix(ukpds_pop[patient, "egfr"])
     m_TR[patient, "egfr_lt60"] <- as.matrix(ukpds_pop[patient, "egfr_lt60"])
     m_TR[patient, "egfr_gte60"] <- as.matrix(ukpds_pop[patient, "egfr_gte60"])
+    m_TR[patient, "egfr_real"] <- as.matrix(ukpds_pop[patient, "egfr_real"])
     m_TR[patient, "hdl"] <- as.matrix(ukpds_pop[patient, "hdl"])
     m_TR[patient, "hdl_lag"] <- as.matrix(ukpds_pop[patient, "hdl_lag"])
     m_TR[patient, "hdl_first"] <- as.matrix(ukpds_pop[patient, "hdl_first"])
+    m_TR[patient, "hdl_real"] <- as.matrix(ukpds_pop[patient, "hdl_real"])
     m_TR[patient, "heart_rate"] <- as.matrix(ukpds_pop[patient, "heart_rate"])
     m_TR[patient, "heart_rate_lag"] <- as.matrix(ukpds_pop[patient, "heart_rate_lag"])
     m_TR[patient, "heart_rate_first"] <- as.matrix(ukpds_pop[patient, "heart_rate_first"])
+    m_TR[patient, "heart_rate_real"] <- as.matrix(ukpds_pop[patient, "heart_rate_real"])
     m_TR[patient, "ldl"] <- as.matrix(ukpds_pop[patient, "ldl"])
     m_TR[patient, "ldl_gt35"] <- as.matrix(ukpds_pop[patient, "ldl_gt35"])
     m_TR[patient, "ldl_lag"] <- as.matrix(ukpds_pop[patient, "ldl_lag"])
     m_TR[patient, "ldl_first"] <- as.matrix(ukpds_pop[patient, "ldl_first"])
+    m_TR[patient, "ldl_real"] <- as.matrix(ukpds_pop[patient, "ldl_real"])
     m_TR[patient, "albumin_mm"] <- as.matrix(ukpds_pop[patient, "albumin_mm"])
     m_TR[patient, "sbp"] <- as.matrix(ukpds_pop[patient, "sbp"])
     m_TR[patient, "sbp_lag"] <- as.matrix(ukpds_pop[patient, "sbp_lag"])
     m_TR[patient, "sbp_first"] <- as.matrix(ukpds_pop[patient, "sbp_first"])
+    m_TR[patient, "sbp_real"] <- as.matrix(ukpds_pop[patient, "sbp_real"])
     m_TR[patient, "wbc"] <- as.matrix(ukpds_pop[patient, "wbc"])
     m_TR[patient, "wbc_lag"] <- as.matrix(ukpds_pop[patient, "wbc_lag"])
     m_TR[patient, "wbc_first"] <- as.matrix(ukpds_pop[patient, "wbc_first"])
     
     # Hardcoded hemoglobin values
-    m_TR[patient, "heamo"] <- 1
-    m_TR[patient, "heamo_first"] <- 1
+    m_TR[patient, "heamo"] <- 15
+    m_TR[patient, "heamo_first"] <- 15
     
     # Event history tracking
     event_vars <- c("amp_event", "amp_event2", "amp_hist", "atria_fib",
@@ -184,7 +190,7 @@ initialize_patients <- function(num_patients, ukpds_pop, m_TR) {
 biomarker <- function(m_TR, a_coef_C, biomarker_eq,  time_step) {
   
   # Calculate patient-specific factors using model coefficients and patient data
-  updated_biomarker <- (m_TR[max(1,time_step-1), 1:57] %*%  a_coef_C[1:57,  biomarker_eq, 1] + 
+  updated_biomarker <- (m_TR[max(1,time_step-1), 1:62] %*%  a_coef_C[1:62,  biomarker_eq, 1] + 
                           as.vector(a_coef_C["lambda",  biomarker_eq, 1]) )
   
   return(updated_biomarker)
@@ -215,21 +221,21 @@ biomarker <- function(m_TR, a_coef_C, biomarker_eq,  time_step) {
 
 all_biomarkers <- function(m_TR, a_coef_C, time_step, next_row) {
   
-
-  # List of biomarkers to update
-  biomarkers <- c("a1c", "sbp", "ldl", "hdl", "bmi", 
-                  "heart_rate", "wbc", "heamo")
+# predict the next period (and perform transformations as needed)
+  # the biomarkers use real values of variables, but the event equations use transformed variables
+  m_TR[next_row, "a1c"] <- biomarker(m_TR, a_coef_C, biomarker_eq = "hba1c", time_step = time_step)
+  m_TR[next_row, "sbp_real"] <- biomarker(m_TR, a_coef_C, biomarker_eq = "sbp", time_step = time_step)
+    m_TR[next_row, "sbp"] <- m_TR[next_row, "sbp_real"] /10
+  m_TR[next_row, "ldl_real"] <- biomarker(m_TR, a_coef_C, biomarker_eq = "ldl", time_step = time_step)
+    m_TR[next_row, "ldl"] <- m_TR[next_row, "ldl_real"] * 10
+  m_TR[next_row, "hdl_real"] <- biomarker(m_TR, a_coef_C, biomarker_eq = "hdl", time_step = time_step)
+    m_TR[next_row, "hdl"] <- m_TR[next_row, "hdl_real"] * 10 
+  m_TR[next_row, "bmi"] <- biomarker(m_TR, a_coef_C, biomarker_eq = "bmi", time_step = time_step)
+  m_TR[next_row, "heart_rate_real"] <- biomarker(m_TR, a_coef_C, biomarker_eq = "heart_rate", time_step = time_step)
+    m_TR[next_row, "heart_rate"] <- m_TR[next_row, "heart_rate_real"] /10
+  m_TR[next_row, "wbc"] <- biomarker(m_TR, a_coef_C, biomarker_eq = "wbc", time_step = time_step)
+  m_TR[next_row, "heamo"] <- biomarker(m_TR, a_coef_C, biomarker_eq = "haem", time_step = time_step)
   
-  # Corresponding biomarker equation names in a_coef_C
-  biomarker_eqs <- c("hba1c", "sbp", "ldl", "hdl", "bmi", 
-                     "heart_rate", "wbc", "haem")
-  
-  # Loop through each biomarker and update the matrix
-  for (i in seq_along(biomarkers)) {
-    m_TR[next_row, biomarkers[i]] <- biomarker(
-      m_TR, a_coef_C, biomarker_eq = biomarker_eqs[i], time_step = time_step
-    )
-  }
   
   # Update lag and first occurrence columns
   m_TR[next_row, "a1c_lag"] <- m_TR[time_step, "a1c"]
@@ -237,24 +243,27 @@ all_biomarkers <- function(m_TR, a_coef_C, time_step, next_row) {
   m_TR[next_row, "bmi_lag"] <- m_TR[time_step, "bmi"]
   m_TR[next_row, "bmi_lt18_5"] <- as.integer(m_TR[next_row, "bmi"] < 18.5)
   m_TR[next_row, "bmi_gte25"] <- as.integer(m_TR[next_row, "bmi"] >= 25)
-  
   m_TR[next_row, "bmi_first"] <- m_TR[1, "bmi"]
-  m_TR[next_row, "hdl_lag"] <- m_TR[time_step, "hdl"]
-  m_TR[next_row, "hdl_first"] <- m_TR[1, "hdl"]
-  m_TR[next_row, "heart_rate_lag"] <- m_TR[time_step, "heart_rate"]
-  m_TR[next_row, "heart_rate_first"] <- m_TR[1, "heart_rate"]
   
-  m_TR[next_row, "ldl_gt35"] <- as.integer(m_TR[next_row, "ldl"] > 35)
-  m_TR[next_row, "ldl_lag"] <- m_TR[time_step, "ldl"]
-  m_TR[next_row, "ldl_first"] <- m_TR[1, "ldl"]
-  m_TR[next_row, "sbp_lag"] <- m_TR[time_step, "sbp"]
-  m_TR[next_row, "sbp_first"] <- m_TR[1, "sbp"]
+
+  m_TR[next_row, "hdl_lag"] <- m_TR[time_step, "hdl_real"]
+  m_TR[next_row, "hdl_first"] <- m_TR[1, "hdl_real"]
+  
+  m_TR[next_row, "heart_rate_lag"] <- m_TR[time_step, "heart_rate_real"]
+  m_TR[next_row, "heart_rate_first"] <- m_TR[1, "heart_rate_real"]
+  # check if this is functioning as a spline
+  m_TR[next_row, "ldl_gt35"] <- as.integer(m_TR[next_row, "ldl_real"] > 35) /10
+  m_TR[next_row, "ldl_lag"] <- m_TR[time_step, "ldl_real"]
+  m_TR[next_row, "ldl_first"] <- m_TR[1, "ldl_real"]
+  m_TR[next_row, "sbp_lag"] <- m_TR[time_step, "sbp_real"]
+  m_TR[next_row, "sbp_first"] <- m_TR[1, "sbp_real"]
   m_TR[next_row, "wbc_lag"] <- m_TR[time_step, "wbc"]
   m_TR[next_row, "wbc_first"] <- m_TR[1, "wbc"]
   m_TR[next_row, "heamo_first"] <- m_TR[1, "heamo"]
   
   # Update additional values
   m_TR[next_row, "egfr"] <- m_TR[1, "egfr"]
+  m_TR[next_row, "egfr_real"] <- m_TR[1, "egfr_real"]
   m_TR[next_row, "egfr_lt60"] <- m_TR[1, "egfr_lt60"]
   m_TR[next_row, "egfr_gte60"] <- m_TR[1, "egfr_gte60"]
   m_TR[next_row, "albumin_mm"] <- m_TR[1, "albumin_mm"]
@@ -290,7 +299,7 @@ all_biomarkers <- function(m_TR, a_coef_C, time_step, next_row) {
 weibull_event <- function(m_TR, a_coef_C, health_outcome, health_event, time_step) {
   
   # Calculate patient-specific factors using model coefficients and patient data
-  patient_factors <- (m_TR[time_step, 1:57] %*%  a_coef_C[1:57, health_outcome, 1] + 
+  patient_factors <- (m_TR[time_step, 1:62] %*%  a_coef_C[1:62, health_outcome, 1] + 
                         as.vector(a_coef_C["lambda", health_outcome, 1]) )
   
   # Compute cumulative hazard at the current time step
@@ -330,7 +339,7 @@ weibull_event <- function(m_TR, a_coef_C, health_outcome, health_event, time_ste
 logistic_event <- function(m_TR, a_coef_C, health_outcome, health_event, time_step) {
   
   # Calculate patient-specific factors using model coefficients and patient data
-  patient_factors <- (m_TR[time_step, 1:57] %*%  a_coef_C[1:57, health_outcome, 1] + 
+  patient_factors <- (m_TR[time_step, 1:62] %*%  a_coef_C[1:62, health_outcome, 1] + 
                         as.vector(a_coef_C["lambda", health_outcome, 1]) )
   
   # Calculate transition probability
@@ -473,7 +482,7 @@ gompertz_event <- function(m_TR, a_coef_C, health_outcome, health_event, time_st
   
   
   # Calculate patient-specific factors using model coefficients and patient data
-  patient_factors <- (m_TR[time_step, 1:57] %*%  a_coef_C[1:57, health_outcome, 1] + 
+  patient_factors <- (m_TR[time_step, 1:62] %*%  a_coef_C[1:62, health_outcome, 1] + 
                         as.vector(a_coef_C["lambda", health_outcome, 1]) )
   
   # Compute cumulative hazard at the current time step
