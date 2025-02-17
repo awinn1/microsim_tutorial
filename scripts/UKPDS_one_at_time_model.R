@@ -544,9 +544,9 @@ mortality <- function(m_ind_traits, m_other_ind_traits, a_coef_ukpds_ind_traits,
   
   # Get the maximum across those columns, for the given time_step
   # Calculate any new health event
-  new_event  <- max(m_TR[time_step, v_event_cols])
+  new_event  <- max(m_ind_traits[time_step, v_event_cols])
   # Calculate any prior history of health events
-  any_history <- max(m_TR[time_step, v_hist_cols])  
+  any_history <- max(m_ind_traits[time_step, v_hist_cols])  
 
   
   # Determine event-history combinations
@@ -734,8 +734,7 @@ patient_summary_file[patient,"disc_qalys"]<-sum(m_summary[,"disc_qalys"])
 }
 
 
-
-ptm <- proc.time()
+(proc.time() - ptm)/60
 
 # Step 10: Summarize and visualize results
 # Calculate summary statistics
