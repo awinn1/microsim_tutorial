@@ -11,6 +11,8 @@ pacman::p_load(haven,
 # Read the coefficient matrix from a CSV or RData file
 UKPDS_coef <- readr::read_csv("data/ukpds_coef.csv")  # Load coefficient matrix from CSV
 
+
+
 # Replace NAs with 0s to avoid missing values in calculations
 UKPDS_coef[is.na(UKPDS_coef)] <- 0  
 
