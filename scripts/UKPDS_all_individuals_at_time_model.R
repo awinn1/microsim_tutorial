@@ -37,7 +37,7 @@ a_coef_ukpds <- array(
   dimnames = list(v_coef_names, v_factors_names, rep_names)
 )
 
-
+dimnames(a_coef_ukpds)
 #fill in the array with coefficents from the dataset
 a_coef_ukpds[,1,1]<-UKPDS_coef$hba1c 
 a_coef_ukpds[,2,1]<-UKPDS_coef$sbp 
@@ -86,7 +86,7 @@ set.seed(seed)    # set the seed to ensure reproducible samples below
 ids <- paste("id",   1:num_i,    sep ="_")
 cycles <- paste("cycle", 0:num_cycles, sep ="_")
 
-# Create AN ARRYA with columns for each variable, row for each person, and a 
+# Create AN ARRAY with columns for each variable, row for each person, and a 
 # slice for each period
 a_all_ind_traits <- array(   
   data = NA, 
@@ -656,8 +656,9 @@ for (time_step in 2:num_cycles) {
   a_ind_traits<- update_all_biomarkers(a_ind_traits, a_coef_ukpds_ind_traits, time_step = time_step, next_row = time_step+1) 
  
 }
-  
  
+a_ind_traits[,,1]
+
 (proc.time() - ptm)/60
 
  # m_ind_traits_new <- m_ind_traits[-nrow(m_ind_traits), ]
