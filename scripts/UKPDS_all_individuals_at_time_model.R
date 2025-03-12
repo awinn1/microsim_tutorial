@@ -1,3 +1,6 @@
+mem.maxVSize()
+
+rm(list = ls())
 
 library(pacman)
 pacman::p_load(haven,
@@ -86,6 +89,7 @@ set.seed(seed)    # set the seed to ensure reproducible samples below
 ids <- paste("id",   1:num_i,    sep ="_")
 cycles <- paste("cycle", 0:num_cycles, sep ="_")
 
+nbr_coef_names <- n_coef_names
 # Create AN ARRAY with columns for each variable, row for each person, and a 
 # slice for each period
 a_all_ind_traits <- array(   
@@ -389,7 +393,8 @@ update_health_events <- function(a_ind_traits, a_coef_ukpds_ind_traits, time_ste
   )
   
   
-  
+  a_ind_traits[, "atria_fib", time_step] <- a_ind_traits[, "atria_fib", 1]
+  a_ind_traits[, "pvd_event", time_step] <- 0
   a_ind_traits[, "amp_event2", time_step] <- 0
   # Randomize event order
   randomized_events <- sample(events)
@@ -637,27 +642,35 @@ patient_summary_file <- matrix(
 
 ptm <- proc.time()
 
+# predict 2nd period biomarkers
+a_ind_traits<- update_all_biomarkers(a_ind_traits, a_coef_ukpds_ind_traits, 
+                                     time_step = 1, next_row = 2) 
+
 #print(patient)
 #create a patient population 
-for (time_step in 2:num_cycles) {
-  
+for (time_step in 4:num_cycles) {
   a_ind_traits[ ,"age",time_step]<-a_ind_traits[,"age", max(1,time_step-1)] +1
   a_ind_traits[ ,"diab_dur",time_step]<-a_ind_traits[,"diab_dur" , max(1,time_step-1)]+1    
   a_ind_traits[,"diab_dur_log",time_step]<- (log(a_ind_traits[,"diab_dur", time_step]))
   
+  # a_ind_traits<- update_all_biomarkers(a_ind_traits, a_coef_ukpds_ind_traits, 
+  #                                      time_step = time_step, next_row = time_step+1) 
+  
   # ready to simulate 
   # event prediction at t
-  a_ind_traits <- update_health_events(a_ind_traits, a_coef_ukpds_ind_traits, time_step = time_step)
+  a_ind_traits <- update_health_events(a_ind_traits, a_coef_ukpds_ind_traits, 
+                                       time_step = time_step)
   # mortality prediction at t
-  
+
   a_other_ind_traits <- mortality(a_ind_traits, a_other_ind_traits, a_coef_ukpds_ind_traits, time_step = time_step)
   #predict the risk factors for the next cycle (t+1) 
 
   a_ind_traits<- update_all_biomarkers(a_ind_traits, a_coef_ukpds_ind_traits, time_step = time_step, next_row = time_step+1) 
- 
+
 }
- 
-a_ind_traits[,,1]
+
+# did it work?!?
+a_ind_traits[,,7]
 
 (proc.time() - ptm)/60
 
