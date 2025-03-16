@@ -40,14 +40,16 @@ a_coef_ukpds <- array(
 )
 
 
+## Check dimnames
+dimnames(a_coef_ukpds)
+
 # fill in the array with coefficents from the dataset (The first depth layer is exactly the same as your UKPDS_coef. We can just import it directly)
 # Use UKPDS_coef as our first depth layer in the 3D array
-a_coef_ukpds[, , 1] <- as.matrix(UKPDS_coef[, -1])
-
-
+a_coef_ukpds[,, 1] <- as.matrix(UKPDS_coef[, -1])
 
 
 # Remove lambda, rho, and death and create an array for individual traits and another array for those three parameters
+# This separation is based on Rob's suggestion
 a_coef_ukpds_ind_traits <- a_coef_ukpds[1:62, , "boot_rep_1", drop = FALSE]
 a_coef_ukpds_other_ind_traits <- a_coef_ukpds[63:65, , , drop = FALSE]
 
@@ -56,14 +58,14 @@ a_coef_ukpds_other_ind_traits <- a_coef_ukpds[63:65, , , drop = FALSE]
 
 # Step 2: Create the patient dataset ####
 ukpds_pop <- read_csv("data/population.csv")
+
 # show the names of the variables and rows
-colnames(ukpds_pop)
+# colnames(ukpds_pop)
 
 seed <- 1234 # random number generator state
 num_i <- nrow(ukpds_pop) # number of simulated individuals
 # Define the number of time points
 num_cycles <- 20 # maximum length of a simulation
-
 
 
 set.seed(seed) # set the seed to ensure reproducible samples below
@@ -164,7 +166,6 @@ print(dim(a_ind_traits)) # to verify the dimensions
 print(dimnames(a_ind_traits)) # to verify the dimension names
 
 
-
 # Step 3: Define functions for risk factor progression ####
 # Function for linear progression of risk factors
 #' Calculate Biomarkers
@@ -178,14 +179,19 @@ print(dimnames(a_ind_traits)) # to verify the dimension names
 #'
 #' @return The updated biomarker is stored.
 #' @export
-biomarker <- function(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq, time_step) {
+biomarker <- function(
+  a_ind_traits,
+  a_coef_ukpds_ind_traits,
+  biomarker_eq,
+  time_step
+) {
   # Calculate patient-specific factors using model coefficients and patient data
-  updated_biomarker <- (a_ind_traits[, , time_step] %*% a_coef_ukpds_ind_traits[, biomarker_eq, 1] +
+  updated_biomarker <- (a_ind_traits[,, time_step] %*%
+    a_coef_ukpds_ind_traits[, biomarker_eq, 1] +
     a_coef_ukpds_other_ind_traits["lambda", biomarker_eq, 1])
 
   return(updated_biomarker)
 }
-
 
 
 # Step 4: Create a function to apply all risk factor models ####
@@ -209,33 +215,92 @@ biomarker <- function(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq, time_
 #'
 #' @export
 
-update_all_biomarkers <- function(a_ind_traits, a_coef_ukpds_ind_traits, time_step, next_row) {
+update_all_biomarkers <- function(
+  a_ind_traits,
+  a_coef_ukpds_ind_traits,
+  time_step,
+  next_row
+) {
   # predict the next period (and perform transformations as needed)
   # the biomarkers use real values of variables, but the event equations use transformed variables
-  a_ind_traits[, "a1c", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "hba1c", time_step = time_step)
-  a_ind_traits[, "sbp_real", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "sbp", time_step = time_step)
+  a_ind_traits[, "a1c", next_row] <- biomarker(
+    a_ind_traits,
+    a_coef_ukpds_ind_traits,
+    biomarker_eq = "hba1c",
+    time_step = time_step
+  )
+  a_ind_traits[, "sbp_real", next_row] <- biomarker(
+    a_ind_traits,
+    a_coef_ukpds_ind_traits,
+    biomarker_eq = "sbp",
+    time_step = time_step
+  )
   a_ind_traits[, "sbp", next_row] <- a_ind_traits[, "sbp_real", next_row] / 10
-  a_ind_traits[, "ldl_real", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "ldl", time_step = time_step)
+  a_ind_traits[, "ldl_real", next_row] <- biomarker(
+    a_ind_traits,
+    a_coef_ukpds_ind_traits,
+    biomarker_eq = "ldl",
+    time_step = time_step
+  )
   a_ind_traits[, "ldl", next_row] <- a_ind_traits[, "ldl_real", next_row] * 10
-  a_ind_traits[, "hdl_real", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "hdl", time_step = time_step)
+  a_ind_traits[, "hdl_real", next_row] <- biomarker(
+    a_ind_traits,
+    a_coef_ukpds_ind_traits,
+    biomarker_eq = "hdl",
+    time_step = time_step
+  )
   a_ind_traits[, "hdl", next_row] <- a_ind_traits[, "hdl_real", next_row] * 10
-  a_ind_traits[, "bmi", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "bmi", time_step = time_step)
-  a_ind_traits[, "heart_rate_real", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "heart_rate", time_step = time_step)
-  a_ind_traits[, "heart_rate", next_row] <- a_ind_traits[, "heart_rate_real", next_row] / 10
-  a_ind_traits[, "wbc", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "wbc", time_step = time_step)
-  a_ind_traits[, "heamo", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "haem", time_step = time_step)
+  a_ind_traits[, "bmi", next_row] <- biomarker(
+    a_ind_traits,
+    a_coef_ukpds_ind_traits,
+    biomarker_eq = "bmi",
+    time_step = time_step
+  )
+  a_ind_traits[, "heart_rate_real", next_row] <- biomarker(
+    a_ind_traits,
+    a_coef_ukpds_ind_traits,
+    biomarker_eq = "heart_rate",
+    time_step = time_step
+  )
+  a_ind_traits[, "heart_rate", next_row] <- a_ind_traits[,
+    "heart_rate_real",
+    next_row
+  ] /
+    10
+  a_ind_traits[, "wbc", next_row] <- biomarker(
+    a_ind_traits,
+    a_coef_ukpds_ind_traits,
+    biomarker_eq = "wbc",
+    time_step = time_step
+  )
+  a_ind_traits[, "heamo", next_row] <- biomarker(
+    a_ind_traits,
+    a_coef_ukpds_ind_traits,
+    biomarker_eq = "haem",
+    time_step = time_step
+  )
 
   # Update lag and first occurrence columns
   a_ind_traits[, "a1c_lag", next_row] <- a_ind_traits[, "a1c", time_step]
   a_ind_traits[, "bmi_lag", next_row] <- a_ind_traits[, "bmi", time_step]
-  a_ind_traits[, "bmi_lt18_5", next_row] <- as.integer(a_ind_traits[, "bmi", next_row] < 18.5)
-  a_ind_traits[, "bmi_gte25", next_row] <- as.integer(a_ind_traits[, "bmi", next_row] >= 25)
+  a_ind_traits[, "bmi_lt18_5", next_row] <- as.integer(
+    a_ind_traits[, "bmi", next_row] < 18.5
+  )
+  a_ind_traits[, "bmi_gte25", next_row] <- as.integer(
+    a_ind_traits[, "bmi", next_row] >= 25
+  )
 
   a_ind_traits[, "hdl_lag", next_row] <- a_ind_traits[, "hdl_real", time_step]
-  a_ind_traits[, "heart_rate_lag", next_row] <- a_ind_traits[, "heart_rate_real", time_step]
+  a_ind_traits[, "heart_rate_lag", next_row] <- a_ind_traits[,
+    "heart_rate_real",
+    time_step
+  ]
 
   # Check if this is functioning as a spline
-  a_ind_traits[, "ldl_gt35", next_row] <- as.integer(a_ind_traits[, "ldl_real", next_row] > 35) / 10
+  a_ind_traits[, "ldl_gt35", next_row] <- as.integer(
+    a_ind_traits[, "ldl_real", next_row] > 35
+  ) /
+    10
   a_ind_traits[, "ldl_lag", next_row] <- a_ind_traits[, "ldl_real", time_step]
   a_ind_traits[, "sbp_lag", next_row] <- a_ind_traits[, "sbp_real", time_step]
   a_ind_traits[, "wbc_lag", next_row] <- a_ind_traits[, "wbc", time_step]
@@ -247,7 +312,6 @@ update_all_biomarkers <- function(a_ind_traits, a_coef_ukpds_ind_traits, time_st
   a_ind_traits[, "egfr_gte60", next_row] <- a_ind_traits[, "egfr_gte60", 1]
   a_ind_traits[, "albumin_mm", next_row] <- a_ind_traits[, "albumin_mm", 1]
 
-
   # Return updated matrix
   return(a_ind_traits)
 }
@@ -256,7 +320,6 @@ update_all_biomarkers <- function(a_ind_traits, a_coef_ukpds_ind_traits, time_st
 # Step 5: Define event functions (Weibull/Exponential and Logistic) ####
 # Weibull distribution function for event occurrence
 # Logistic regression for binary event prediction
-
 
 #' Calculate Transition Probability Based on a Weibull Model and Update Patient State
 #' Note: An exponential model is a special case of the Weibull model where the shape
@@ -276,16 +339,33 @@ update_all_biomarkers <- function(a_ind_traits, a_coef_ukpds_ind_traits, time_st
 #'
 #' @return Whether the event occurred.
 #' @export
-weibull_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome, health_event, time_step) {
+weibull_event <- function(
+  a_ind_traits,
+  a_coef_ukpds_ind_traits,
+  health_outcome,
+  health_event,
+  time_step
+) {
   # Calculate patient-specific factors using model coefficients and patient data
-  patient_factors <- (a_ind_traits[, , time_step] %*% a_coef_ukpds_ind_traits[, health_outcome, 1] +
+  patient_factors <- (a_ind_traits[,, time_step] %*%
+    a_coef_ukpds_ind_traits[, health_outcome, 1] +
     as.vector(a_coef_ukpds_other_ind_traits["lambda", health_outcome, 1]))
 
   # Compute cumulative hazard at the current time step
-  cum_hazard_t <- exp(patient_factors) * (a_ind_traits[, "diab_dur", time_step]^(a_coef_ukpds_other_ind_traits["rho", health_outcome, 1]))
+  cum_hazard_t <- exp(patient_factors) *
+    (a_ind_traits[, "diab_dur", time_step]^(a_coef_ukpds_other_ind_traits[
+      "rho",
+      health_outcome,
+      1
+    ]))
 
   # Compute cumulative hazard at the next time step (by adding 1 year to diabetes duration)
-  cum_hazard_t1 <- exp(patient_factors) * ((a_ind_traits[, "diab_dur", time_step] + 1)^(a_coef_ukpds_other_ind_traits["rho", health_outcome, 1]))
+  cum_hazard_t1 <- exp(patient_factors) *
+    ((a_ind_traits[, "diab_dur", time_step] + 1)^(a_coef_ukpds_other_ind_traits[
+      "rho",
+      health_outcome,
+      1
+    ]))
 
   # Calculate transition probability
   trans_prob <- 1 - exp(cum_hazard_t - cum_hazard_t1)
@@ -296,8 +376,6 @@ weibull_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome,
   # Return the updated matrix
   return(event)
 }
-
-
 
 
 #' Calculate Transition Probability Based on a Logistic Regression and Update Patient State
@@ -315,9 +393,16 @@ weibull_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome,
 #'
 #' @return Whether the event occurred.
 #' @export
-logistic_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome, health_event, time_step) {
+logistic_event <- function(
+  a_ind_traits,
+  a_coef_ukpds_ind_traits,
+  health_outcome,
+  health_event,
+  time_step
+) {
   # Calculate patient-specific factors using model coefficients and patient data
-  patient_factors <- (a_ind_traits[, , time_step] %*% a_coef_ukpds_ind_traits[, health_outcome, 1] +
+  patient_factors <- (a_ind_traits[,, time_step] %*%
+    a_coef_ukpds_ind_traits[, health_outcome, 1] +
     as.vector(a_coef_ukpds_other_ind_traits["lambda", health_outcome, 1]))
 
   # Calculate transition probability
@@ -326,7 +411,6 @@ logistic_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome
   # Simulate whether the event occurs by comparing with a random uniform value
   event <- trans_prob > runif(1)
 
-
   # Return the value
   return(event)
 }
@@ -334,8 +418,6 @@ logistic_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome
 #
 # u <- logistic_event(m_ind_traits, a_coef_ukpds_ind_traits, health_outcome = "ulcer", health_event = "ulcer_event", time_step = 1)
 # m_ind_traits <- weibull_event(m_ind_traits, a_coef_ukpds_ind_traits, health_outcome = "ihd", health_event = "ihd_event", time_step = 1)
-
-
 
 # Step 6: Initialize event and history variables ####
 #' @title Update Health Events Over Time Steps
@@ -354,7 +436,11 @@ logistic_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome
 #' }
 #'
 #' @export
-update_health_events <- function(a_ind_traits, a_coef_ukpds_ind_traits, time_step) {
+update_health_events <- function(
+  a_ind_traits,
+  a_coef_ukpds_ind_traits,
+  time_step
+) {
   # Ensure m_ind_traits remains a matrix
   if (!is.array(a_ind_traits)) {
     stop("m_ind_traits must be an array.")
@@ -374,33 +460,43 @@ update_health_events <- function(a_ind_traits, a_coef_ukpds_ind_traits, time_ste
     a_ind_traits[, v_event_cols, max(1, time_step - 1)]
   )
 
-
-
   a_ind_traits[, "amp_event2", time_step] <- 0
   # Randomize event order
   randomized_events <- sample(events)
 
   for (events in randomized_events) {
     if (events == "amp") {
-      amp1_no_ulcer <- weibull_event(a_ind_traits, a_coef_ukpds_ind_traits,
-        health_outcome = "amp1_no_ulcer", health_event = "amp_event", time_step = time_step
+      amp1_no_ulcer <- weibull_event(
+        a_ind_traits,
+        a_coef_ukpds_ind_traits,
+        health_outcome = "amp1_no_ulcer",
+        health_event = "amp_event",
+        time_step = time_step
       )
-      amp1_yes_ulcer <- weibull_event(a_ind_traits, a_coef_ukpds_ind_traits,
-        health_outcome = "amp1_yes_ulcer", health_event = "amp_event", time_step = time_step
+      amp1_yes_ulcer <- weibull_event(
+        a_ind_traits,
+        a_coef_ukpds_ind_traits,
+        health_outcome = "amp1_yes_ulcer",
+        health_event = "amp_event",
+        time_step = time_step
       )
 
       a_ind_traits[, "amp_event", time_step] <-
         (amp1_no_ulcer * (a_ind_traits[, "ulcer_hist", time_step] == 0)) +
         (amp1_yes_ulcer * (a_ind_traits[, "ulcer_hist", time_step] == 1))
 
-
       # Ensure that this is a new event
       a_ind_traits[, "amp_event", time_step] <-
-        a_ind_traits[, "amp_event", time_step] * (a_ind_traits[, "amp_hist", time_step] == 0)
+        a_ind_traits[, "amp_event", time_step] *
+        (a_ind_traits[, "amp_hist", time_step] == 0)
 
       # Calculate amp2 event
-      amp2 <- weibull_event(a_ind_traits, a_coef_ukpds_ind_traits,
-        health_outcome = "amp2", health_event = "amp_event2", time_step = time_step
+      amp2 <- weibull_event(
+        a_ind_traits,
+        a_coef_ukpds_ind_traits,
+        health_outcome = "amp2",
+        health_event = "amp_event2",
+        time_step = time_step
       )
 
       a_ind_traits[, "amp_event2", time_step] <- 0
@@ -408,11 +504,19 @@ update_health_events <- function(a_ind_traits, a_coef_ukpds_ind_traits, time_ste
       a_ind_traits[, "amp_event2", time_step] <-
         amp2 * (a_ind_traits[, "amp_hist", time_step] == 1)
     } else if (events == "mi") {
-      mi1_male <- weibull_event(a_ind_traits, a_coef_ukpds_ind_traits,
-        health_outcome = "mi1_male", health_event = "mi_event", time_step = time_step
+      mi1_male <- weibull_event(
+        a_ind_traits,
+        a_coef_ukpds_ind_traits,
+        health_outcome = "mi1_male",
+        health_event = "mi_event",
+        time_step = time_step
       )
-      mi1_female <- weibull_event(a_ind_traits, a_coef_ukpds_ind_traits,
-        health_outcome = "mi1_female", health_event = "mi_event", time_step = time_step
+      mi1_female <- weibull_event(
+        a_ind_traits,
+        a_coef_ukpds_ind_traits,
+        health_outcome = "mi1_female",
+        health_event = "mi_event",
+        time_step = time_step
       )
 
       a_ind_traits[, "mi_event", time_step] <-
@@ -420,21 +524,35 @@ update_health_events <- function(a_ind_traits, a_coef_ukpds_ind_traits, time_ste
         (mi1_female * (a_ind_traits[, "female", time_step] == 1))
 
       a_ind_traits[, "mi_event", time_step] <-
-        a_ind_traits[, "mi_event", time_step] * (a_ind_traits[, "mi_hist", time_step] == 0)
+        a_ind_traits[, "mi_event", time_step] *
+        (a_ind_traits[, "mi_hist", time_step] == 0)
 
-      mi2 <- weibull_event(a_ind_traits, a_coef_ukpds_ind_traits,
-        health_outcome = "mi2", health_event = "mi_event", time_step = time_step
+      mi2 <- weibull_event(
+        a_ind_traits,
+        a_coef_ukpds_ind_traits,
+        health_outcome = "mi2",
+        health_event = "mi_event",
+        time_step = time_step
       )
 
       a_ind_traits[, "mi_event", time_step] <-
-        (a_ind_traits[, "mi_hist", time_step] == 0) * a_ind_traits[, "mi_event", time_step] +
+        (a_ind_traits[, "mi_hist", time_step] == 0) *
+        a_ind_traits[, "mi_event", time_step] +
         (a_ind_traits[, "mi_hist", time_step] == 1) * mi2
     } else if (events == "stroke") {
-      stroke1 <- weibull_event(a_ind_traits, a_coef_ukpds_ind_traits,
-        health_outcome = "stroke_1", health_event = "stroke_event", time_step = time_step
+      stroke1 <- weibull_event(
+        a_ind_traits,
+        a_coef_ukpds_ind_traits,
+        health_outcome = "stroke_1",
+        health_event = "stroke_event",
+        time_step = time_step
       )
-      stroke2 <- weibull_event(a_ind_traits, a_coef_ukpds_ind_traits,
-        health_outcome = "stroke_2", health_event = "stroke_event", time_step = time_step
+      stroke2 <- weibull_event(
+        a_ind_traits,
+        a_coef_ukpds_ind_traits,
+        health_outcome = "stroke_2",
+        health_event = "stroke_event",
+        time_step = time_step
       )
 
       a_ind_traits[, "stroke_event", time_step] <-
@@ -442,24 +560,34 @@ update_health_events <- function(a_ind_traits, a_coef_ukpds_ind_traits, time_ste
         (stroke2 * (a_ind_traits[, "stroke_hist", time_step] == 1))
 
       a_ind_traits[, "stroke_event", time_step] <-
-        a_ind_traits[, "stroke_event", time_step] * (a_ind_traits[, "stroke_hist", time_step] == 0)
+        a_ind_traits[, "stroke_event", time_step] *
+        (a_ind_traits[, "stroke_hist", time_step] == 0)
     } else if (events == "ulcer") {
       a_ind_traits[, "ulcer_event", time_step] <-
-        logistic_event(a_ind_traits, a_coef_ukpds_ind_traits,
-          health_outcome = "ulcer", health_event = "ulcer_event", time_step = time_step
+        logistic_event(
+          a_ind_traits,
+          a_coef_ukpds_ind_traits,
+          health_outcome = "ulcer",
+          health_event = "ulcer_event",
+          time_step = time_step
         )
 
       a_ind_traits[, "ulcer_event", time_step] <-
-        a_ind_traits[, "ulcer_event", time_step] * (a_ind_traits[, "ulcer_hist", time_step] == 0)
+        a_ind_traits[, "ulcer_event", time_step] *
+        (a_ind_traits[, "ulcer_hist", time_step] == 0)
     } else {
       a_ind_traits[, paste0(events, "_event"), time_step] <-
-        weibull_event(a_ind_traits, a_coef_ukpds_ind_traits,
-          health_outcome = events, health_event = paste0(events, "_event"), time_step = time_step
+        weibull_event(
+          a_ind_traits,
+          a_coef_ukpds_ind_traits,
+          health_outcome = events,
+          health_event = paste0(events, "_event"),
+          time_step = time_step
         )
 
       a_ind_traits[, paste0(events, "_event"), time_step] <-
         a_ind_traits[, paste0(events, "_event"), time_step] *
-          (a_ind_traits[, paste0(events, "_hist"), time_step] == 0)
+        (a_ind_traits[, paste0(events, "_hist"), time_step] == 0)
     }
   }
 
@@ -486,15 +614,36 @@ update_health_events <- function(a_ind_traits, a_coef_ukpds_ind_traits, time_ste
 #'
 #' @return The event occurrence stored.
 #' @export
-gompertz_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome, health_event, time_step) {
+gompertz_event <- function(
+  a_ind_traits,
+  a_coef_ukpds_ind_traits,
+  health_outcome,
+  health_event,
+  time_step
+) {
   # Calculate patient-specific factors using model coefficients and patient data
-  patient_factors <- (a_ind_traits[, , time_step] %*% a_coef_ukpds_ind_traits[, health_outcome, 1] +
+  patient_factors <- (a_ind_traits[,, time_step] %*%
+    a_coef_ukpds_ind_traits[, health_outcome, 1] +
     as.vector(a_coef_ukpds_other_ind_traits["lambda", health_outcome, 1]))
 
   # Compute cumulative hazard at the current time step
-  cum_hazard_t <- (1 / a_coef_ukpds_other_ind_traits["rho", health_outcome, 1]) * exp(patient_factors) * (exp(a_ind_traits[, "age", time_step] * (a_coef_ukpds_other_ind_traits["rho", health_outcome, 1])) - 1)
+  cum_hazard_t <- (1 /
+    a_coef_ukpds_other_ind_traits["rho", health_outcome, 1]) *
+    exp(patient_factors) *
+    (exp(
+      a_ind_traits[, "age", time_step] *
+        (a_coef_ukpds_other_ind_traits["rho", health_outcome, 1])
+    ) -
+      1)
   # Compute cumulative hazard at the next time step (by adding 1 year to diabetes duration)
-  cum_hazard_t1 <- (1 / a_coef_ukpds_other_ind_traits["rho", health_outcome, 1]) * exp(patient_factors) * (exp((a_ind_traits[, "age", time_step] + 1) * (a_coef_ukpds_other_ind_traits["rho", health_outcome, 1])) - 1)
+  cum_hazard_t1 <- (1 /
+    a_coef_ukpds_other_ind_traits["rho", health_outcome, 1]) *
+    exp(patient_factors) *
+    (exp(
+      (a_ind_traits[, "age", time_step] + 1) *
+        (a_coef_ukpds_other_ind_traits["rho", health_outcome, 1])
+    ) -
+      1)
 
   # Calculate transition probability
   trans_prob <- 1 - exp(cum_hazard_t - cum_hazard_t1)
@@ -525,7 +674,12 @@ gompertz_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome
 #' }
 #'
 #' @export
-mortality <- function(a_ind_traits, a_other_ind_traits, a_coef_ukpds_ind_traits, time_step) {
+mortality <- function(
+  a_ind_traits,
+  a_other_ind_traits,
+  a_coef_ukpds_ind_traits,
+  time_step
+) {
   # Calculate new health event occurrence and prior history
 
   # Define events of interest
@@ -541,7 +695,6 @@ mortality <- function(a_ind_traits, a_other_ind_traits, a_coef_ukpds_ind_traits,
   # Calculate any prior history of health events
   any_history <- max(a_ind_traits[, v_hist_cols, time_step])
 
-
   # Determine event-history combinations
   nhne <- new_event == 0 & any_history == 0 # No history, no event
   yhne <- new_event == 0 & any_history == 1 # Yes history, no event
@@ -549,31 +702,48 @@ mortality <- function(a_ind_traits, a_other_ind_traits, a_coef_ukpds_ind_traits,
   yhye <- new_event == 1 & any_history == 1 # Yes history, new event
 
   # Mortality calculations using Gompertz and logistic models
-  death_nhne <- gompertz_event(a_ind_traits, a_coef_ukpds_ind_traits,
+  death_nhne <- gompertz_event(
+    a_ind_traits,
+    a_coef_ukpds_ind_traits,
     health_outcome = "death_nhne",
-    health_event = "death_nhne", time_step = time_step
+    health_event = "death_nhne",
+    time_step = time_step
   )
 
-  death_yhne <- gompertz_event(a_ind_traits, a_coef_ukpds_ind_traits,
+  death_yhne <- gompertz_event(
+    a_ind_traits,
+    a_coef_ukpds_ind_traits,
     health_outcome = "death_yhne",
-    health_event = "death_yhne", time_step = time_step
+    health_event = "death_yhne",
+    time_step = time_step
   )
 
-  death_nhye <- logistic_event(a_ind_traits, a_coef_ukpds_ind_traits,
+  death_nhye <- logistic_event(
+    a_ind_traits,
+    a_coef_ukpds_ind_traits,
     health_outcome = "death_1st_event",
-    health_event = "death_nhye", time_step = time_step
+    health_event = "death_nhye",
+    time_step = time_step
   )
 
-  death_yhye <- logistic_event(a_ind_traits, a_coef_ukpds_ind_traits,
+  death_yhye <- logistic_event(
+    a_ind_traits,
+    a_coef_ukpds_ind_traits,
     health_outcome = "death_yhye",
-    health_event = "death_yhye", time_step = time_step
+    health_event = "death_yhye",
+    time_step = time_step
   )
 
   # Calculate new mortality status
-  new_death <- nhne * death_nhne + yhne * death_yhne + nhye * death_nhye + yhye * death_yhye
+  new_death <- nhne *
+    death_nhne +
+    yhne * death_yhne +
+    nhye * death_nhye +
+    yhye * death_yhye
 
   # Update the mortality status in the matrix for the given time step
-  a_other_ind_traits[, "death", time_step] <- new_death + a_other_ind_traits[, "death", max(time_step - 1, 1)]
+  a_other_ind_traits[, "death", time_step] <- new_death +
+    a_other_ind_traits[, "death", max(time_step - 1, 1)]
 
   return(a_other_ind_traits)
 }
@@ -585,11 +755,9 @@ mortality <- function(a_ind_traits, a_other_ind_traits, a_coef_ukpds_ind_traits,
 # Store results
 # discount rate
 
-
 # Step 9: Simulate disease progression and mortality for 999 additional patients
 # Loop over all patients
 # Store and summarize population-level results
-
 
 discount_rate <- 0.03
 # qalys
@@ -636,29 +804,52 @@ ptm <- proc.time()
 # print(patient)
 # create a patient population
 for (time_step in 2:num_cycles) {
-  a_ind_traits[, "age", time_step] <- a_ind_traits[, "age", max(1, time_step - 1)] + 1
-  a_ind_traits[, "diab_dur", time_step] <- a_ind_traits[, "diab_dur", max(1, time_step - 1)] + 1
-  a_ind_traits[, "diab_dur_log", time_step] <- (log(a_ind_traits[, "diab_dur", time_step]))
+  a_ind_traits[, "age", time_step] <- a_ind_traits[,
+    "age",
+    max(1, time_step - 1)
+  ] +
+    1
+  a_ind_traits[, "diab_dur", time_step] <- a_ind_traits[,
+    "diab_dur",
+    max(1, time_step - 1)
+  ] +
+    1
+  a_ind_traits[, "diab_dur_log", time_step] <- (log(a_ind_traits[,
+    "diab_dur",
+    time_step
+  ]))
 
   # ready to simulate
   # event prediction at t
-  a_ind_traits <- update_health_events(a_ind_traits, a_coef_ukpds_ind_traits, time_step = time_step)
+  a_ind_traits <- update_health_events(
+    a_ind_traits,
+    a_coef_ukpds_ind_traits,
+    time_step = time_step
+  )
   # mortality prediction at t
 
-  a_other_ind_traits <- mortality(a_ind_traits, a_other_ind_traits, a_coef_ukpds_ind_traits, time_step = time_step)
+  a_other_ind_traits <- mortality(
+    a_ind_traits,
+    a_other_ind_traits,
+    a_coef_ukpds_ind_traits,
+    time_step = time_step
+  )
   # predict the risk factors for the next cycle (t+1)
 
-  a_ind_traits <- update_all_biomarkers(a_ind_traits, a_coef_ukpds_ind_traits, time_step = time_step, next_row = time_step + 1)
+  a_ind_traits <- update_all_biomarkers(
+    a_ind_traits,
+    a_coef_ukpds_ind_traits,
+    time_step = time_step,
+    next_row = time_step + 1
+  )
 }
 # })
 
 (proc.time() - ptm) / 60
 
 
-a_ind_traits[, , "cycle_1"]
+a_ind_traits[,, "cycle_1"]
 # m_ind_traits_new <- m_ind_traits[-nrow(m_ind_traits), ]
-
-
 
 # m_summary <- matrix(
 #   data = NA,
@@ -711,17 +902,11 @@ a_ind_traits[, , "cycle_1"]
 #   m_summary[time_step, "disc_qalys"] <- m_summary[time_step, "qalys"] / (1 + discount_rate)^time_step
 # }
 
-
-
-
 # patient_summary_file[patient, "cost"] <- sum(m_summary[, "cost"])
 # patient_summary_file[patient, "disc_costs"] <- sum(m_summary[, "disc_costs"])
 # patient_summary_file[patient, "qalys"] <- sum(m_summary[, "qalys"])
 # patient_summary_file[patient, "disc_qalys"] <- sum(m_summary[, "disc_qalys"])
 # # }
-
-
-
 
 # Step 10: Summarize and visualize results
 # Calculate summary statistics
