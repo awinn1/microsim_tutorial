@@ -24,7 +24,7 @@ v_coef_names <- m_UKPDS_coef$Parameter # Get row names from the 'Parameter' colu
 n_coef <-  length(v_coef_names)  # Count the number of parameters
 
 # Extract factor names (used as column names), excluding the first column
-v_factors_names <- as.vector(colnames(m_UKPDS_coef[-1]))  # Get column names excluding 'Parameter'
+v_factors_names <- colnames(m_UKPDS_coef[-1])  # Get column names excluding 'Parameter'
 
 # Determine the number of factors (columns)
 n_equa_names <- length(v_factors_names)  # Count the number of factors
