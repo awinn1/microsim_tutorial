@@ -12,19 +12,19 @@ pacman::p_load(haven,
 # Step 1: Import the matrix of coefficients ####
 # Load necessary libraries
 # Read the coefficient matrix from a CSV or RData file
-UKPDS_coef <- readr::read_csv("data/ukpds_coef.csv")  # Load coefficient matrix from CSV
+m_UKPDS_coef <- readr::read_csv("data/ukpds_coef.csv")  # Load coefficient matrix from CSV
 
 # Replace NAs with 0s to avoid missing values in calculations
-UKPDS_coef[is.na(UKPDS_coef)] <- 0  
+m_UKPDS_coef[is.na(m_UKPDS_coef)] <- 0  
 
 # Extract parameter names (used as row names)
-v_coef_names <- UKPDS_coef$Parameter # Get row names from the 'Parameter' column
+v_coef_names <- m_UKPDS_coef$Parameter # Get row names from the 'Parameter' column
 
 # Determine the number of parameters (rows)
 n_coef_names <-  length(v_coef_names)  # Count the number of parameters
 
 # Extract factor names (used as column names), excluding the first column
-v_factors_names <- as.vector(colnames(UKPDS_coef[-1]))  # Get column names excluding 'Parameter'
+v_factors_names <- as.vector(colnames(m_UKPDS_coef[-1]))  # Get column names excluding 'Parameter'
 
 # Determine the number of factors (columns)
 n_equa_names <- length(v_factors_names)  # Count the number of factors
@@ -42,32 +42,32 @@ a_coef_ukpds <- array(
 
 dimnames(a_coef_ukpds)
 #fill in the array with coefficents from the dataset
-a_coef_ukpds[,1,1]<-UKPDS_coef$hba1c 
-a_coef_ukpds[,2,1]<-UKPDS_coef$sbp 
-a_coef_ukpds[,3,1]<-UKPDS_coef$ldl 
-a_coef_ukpds[,4,1]<-UKPDS_coef$hdl 
-a_coef_ukpds[,5,1]<-UKPDS_coef$bmi 
-a_coef_ukpds[,6,1]<-UKPDS_coef$heart_rate 
-a_coef_ukpds[,7,1]<-UKPDS_coef$wbc 
-a_coef_ukpds[,8,1]<-UKPDS_coef$haem 
-a_coef_ukpds[,9,1]<-UKPDS_coef$chf 
-a_coef_ukpds[,10,1]<-UKPDS_coef$ihd 
-a_coef_ukpds[,11,1]<-UKPDS_coef$mi1_male 
-a_coef_ukpds[,12,1]<-UKPDS_coef$mi1_female 
-a_coef_ukpds[,13,1]<-UKPDS_coef$mi2 
-a_coef_ukpds[,14,1]<-UKPDS_coef$stroke_1 
-a_coef_ukpds[,15,1]<-UKPDS_coef$stroke_2 
-a_coef_ukpds[,16,1]<-UKPDS_coef$blindness 
-a_coef_ukpds[,17,1]<-UKPDS_coef$ulcer 
-a_coef_ukpds[,18,1]<-UKPDS_coef$amp1_no_ulcer 
-a_coef_ukpds[,19,1]<-UKPDS_coef$amp1_yes_ulcer 
-a_coef_ukpds[,20,1]<-UKPDS_coef$amp2 
-a_coef_ukpds[,21,1]<-UKPDS_coef$esrd 
+a_coef_ukpds[,1,1]<-m_UKPDS_coef$hba1c 
+a_coef_ukpds[,2,1]<-m_UKPDS_coef$sbp 
+a_coef_ukpds[,3,1]<-m_UKPDS_coef$ldl 
+a_coef_ukpds[,4,1]<-m_UKPDS_coef$hdl 
+a_coef_ukpds[,5,1]<-m_UKPDS_coef$bmi 
+a_coef_ukpds[,6,1]<-m_UKPDS_coef$heart_rate 
+a_coef_ukpds[,7,1]<-m_UKPDS_coef$wbc 
+a_coef_ukpds[,8,1]<-m_UKPDS_coef$haem 
+a_coef_ukpds[,9,1]<-m_UKPDS_coef$chf 
+a_coef_ukpds[,10,1]<-m_UKPDS_coef$ihd 
+a_coef_ukpds[,11,1]<-m_UKPDS_coef$mi1_male 
+a_coef_ukpds[,12,1]<-m_UKPDS_coef$mi1_female 
+a_coef_ukpds[,13,1]<-m_UKPDS_coef$mi2 
+a_coef_ukpds[,14,1]<-m_UKPDS_coef$stroke_1 
+a_coef_ukpds[,15,1]<-m_UKPDS_coef$stroke_2 
+a_coef_ukpds[,16,1]<-m_UKPDS_coef$blindness 
+a_coef_ukpds[,17,1]<-m_UKPDS_coef$ulcer 
+a_coef_ukpds[,18,1]<-m_UKPDS_coef$amp1_no_ulcer 
+a_coef_ukpds[,19,1]<-m_UKPDS_coef$amp1_yes_ulcer 
+a_coef_ukpds[,20,1]<-m_UKPDS_coef$amp2 
+a_coef_ukpds[,21,1]<-m_UKPDS_coef$esrd 
 
-a_coef_ukpds[,22,1]<-UKPDS_coef$death_nhne 
-a_coef_ukpds[,23,1]<-UKPDS_coef$death_1st_event 
-a_coef_ukpds[,24,1]<-UKPDS_coef$death_yhne 
-a_coef_ukpds[,25,1]<-UKPDS_coef$death_yhye 
+a_coef_ukpds[,22,1]<-m_UKPDS_coef$death_nhne 
+a_coef_ukpds[,23,1]<-m_UKPDS_coef$death_1st_event 
+a_coef_ukpds[,24,1]<-m_UKPDS_coef$death_yhne 
+a_coef_ukpds[,25,1]<-m_UKPDS_coef$death_yhye 
 
 #print(dim(a_coef_ukpds_ind_traits)) # to verify the dimensions, 65 rows, 25 columns, 1 slice
 #print(dimnames(a_coef_ukpds_ind_traits)) # to verify the dimension names
