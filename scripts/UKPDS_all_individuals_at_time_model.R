@@ -30,14 +30,13 @@ v_factors_names <- colnames(m_UKPDS_coef[-1])  # Get column names excluding 'Par
 n_equa <- length(v_factors_names)  # Count the number of factors
 
 # allow for bootstrapped coefficients 
-boot <- 1
-rep_names <- paste0("boot_rep_", 1:boot)
+n_boot <- 1
 
 #create an array that holds onto everything!
 a_coef_ukpds <- array(
   data = NA,
-  dim = c(n_coef, n_equa, boot),
-  dimnames = list(v_coef_names, v_factors_names, rep_names)
+  dim = c(n_coef, n_equa, n_boot),
+  dimnames = list(v_coef_names, v_factors_names, paste0("boot_rep_", 1:n_boot))
 )
 
 dimnames(a_coef_ukpds)
