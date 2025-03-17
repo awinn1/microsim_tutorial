@@ -42,115 +42,71 @@ a_coef_ukpds <- array(
 dimnames(a_coef_ukpds)
 
 # Fill in the array with coefficients from the dataset
-a_coef_ukpds[, v_factors_names, 1] <- as.matrix(df_UKPDS_coef[, v_factors_names])
+a_coef_ukpds[, v_factors_names, 1] <- as.matrix(
+  df_UKPDS_coef[, v_factors_names, drop = FALSE]
+)
 
 # Extract individual characteristics at initial boot strap slice (Aaron, why?)
 a_coef_ukpds_ind_traits<- a_coef_ukpds[1:62, , "boot_rep_1", drop = FALSE]
 a_coef_ukpds_other_ind_traits<- a_coef_ukpds[63:65, , ,drop = FALSE]
 
-# Step 2: Load the patient dataset
-ukpds_pop <- read_csv("data/population.csv")
+# Step 2: Load the patient dataset and save as matrix
+m_ukpds_pop <- read_csv("data/population.csv") |> 
+  as.matrix()
 
 # show the names of the variables and rows
-print(dimnames(ukpds_pop)) 
+print(dimnames(m_ukpds_pop)) 
 
 seed    <- 1234                     # random number generator state
 num_i <- 250000                          # number of simulated individuals
 # Define the number of time points
 num_cycles <- 20                    # maximum length of a simulation 
 set.seed(seed)    # set the seed to ensure reproducible samples below
-ids <- paste("id",   1:num_i,    sep ="_")
-cycles <- paste("cycle", 0:num_cycles, sep ="_")
+v_ids <- paste("id",   1:num_i,    sep ="_")
+v_cycle_nms <- paste("cycle", 0:num_cycles, sep ="_")
 
 # Create AN ARRAY with columns for each variable, row for each person, and a 
 # slice for each period
 a_all_ind_traits <- array(   
   data = NA, 
   dim = c(num_i, n_coef, num_cycles+1),
-  dimnames = list(ids, v_coef_names , cycles )  
+  dimnames = list(v_ids, v_coef_names , v_cycle_nms )  
 )
 # need this to be the same number of columns as the coefficient table is long/rows
 print(dim(a_all_ind_traits)) # to verify the dimensions
 print(dimnames(a_all_ind_traits)) # to verify the dimension names
 
-#Fill patient trace 
-a_all_ind_traits[,"age", 1] <- ukpds_pop$age
-a_all_ind_traits[,"age_diag", ] <- ukpds_pop$age_diag
-a_all_ind_traits[,"black", ] <- ukpds_pop$black
-a_all_ind_traits[,"indian", ] <- ukpds_pop$indian
-a_all_ind_traits[,"female", ] <- ukpds_pop$female
-a_all_ind_traits[,"diab_dur", 1] <- ukpds_pop$diab_dur
-a_all_ind_traits[,"diab_dur_log", 1] <- ukpds_pop$diab_dur_log
-a_all_ind_traits[,"smoke", ] <- ukpds_pop$smoke
-a_all_ind_traits[,"a1c", 1] <- ukpds_pop$a1c
-a_all_ind_traits[,"a1c_lag", 1] <- ukpds_pop$a1c_lag
-a_all_ind_traits[,"a1c_first", ] <- ukpds_pop$a1c_first
-a_all_ind_traits[,"bmi", 1] <- ukpds_pop$bmi
-a_all_ind_traits[,"bmi_lt18_5", 1] <- ukpds_pop$bmi_lt18_5
-a_all_ind_traits[,"bmi_gte25", 1] <- ukpds_pop$bmi_gte25
-a_all_ind_traits[,"bmi_lag", 1] <- ukpds_pop$bmi_lag
-a_all_ind_traits[,"bmi_first", ] <- ukpds_pop$bmi_first
-a_all_ind_traits[,"egfr", 1] <- ukpds_pop$egfr
-a_all_ind_traits[,"egfr_lt60", 1] <- ukpds_pop$egfr_lt60
-a_all_ind_traits[,"egfr_gte60", 1] <- ukpds_pop$egfr_gte60
-a_all_ind_traits[,"egfr_real", 1] <- ukpds_pop$egfr_real
-a_all_ind_traits[,"hdl", 1] <- ukpds_pop$hdl
-a_all_ind_traits[,"hdl_lag", 1] <- ukpds_pop$hdl_lag
-a_all_ind_traits[,"hdl_first", ] <- ukpds_pop$hdl_first
-a_all_ind_traits[,"hdl_real", 1] <- ukpds_pop$hdl_real
-a_all_ind_traits[,"heart_rate", 1] <- ukpds_pop$heart_rate
-a_all_ind_traits[,"heart_rate_lag", 1] <- ukpds_pop$heart_rate_lag
-a_all_ind_traits[,"heart_rate_first", ] <- ukpds_pop$heart_rate_first
-a_all_ind_traits[,"heart_rate_real", 1] <- ukpds_pop$heart_rate_real
-a_all_ind_traits[,"ldl", 1] <- ukpds_pop$ldl
-a_all_ind_traits[,"ldl_gt35", 1] <- ukpds_pop$ldl_gt35
-a_all_ind_traits[,"ldl_lag", 1] <- ukpds_pop$ldl_lag
-a_all_ind_traits[,"ldl_first", ] <- ukpds_pop$ldl_first
-a_all_ind_traits[,"ldl_real", 1] <- ukpds_pop$ldl_real
-a_all_ind_traits[,"albumin_mm", 1] <- ukpds_pop$albumin_mm
-a_all_ind_traits[,"sbp", 1] <- ukpds_pop$sbp
-a_all_ind_traits[,"sbp_lag", 1] <- ukpds_pop$sbp_lag
-a_all_ind_traits[,"sbp_first", ] <- ukpds_pop$sbp_first
-a_all_ind_traits[,"sbp_real", 1] <- ukpds_pop$sbp_real
-a_all_ind_traits[,"wbc", 1] <- ukpds_pop$wbc
-a_all_ind_traits[,"wbc_lag", 1] <- ukpds_pop$wbc_lag
-a_all_ind_traits[,"wbc_first", ] <- ukpds_pop$wbc_first
-a_all_ind_traits[,"heamo", 1] <- ukpds_pop$heamo
-a_all_ind_traits[,"heamo_first", ] <- ukpds_pop$heamo_first
-a_all_ind_traits[,"amp_event", 1] <- ukpds_pop$amp_event
-a_all_ind_traits[,"amp_event2", 1] <- ukpds_pop$amp_event2
-a_all_ind_traits[,"amp_hist", 1] <- ukpds_pop$amp_hist
-a_all_ind_traits[,"atria_fib", 1] <- ukpds_pop$atria_fib
-a_all_ind_traits[,"blindness_event", 1] <- ukpds_pop$blindness_event
-a_all_ind_traits[,"blindness_hist", 1] <- ukpds_pop$blindness_hist
-a_all_ind_traits[,"chf_event", 1] <- ukpds_pop$chf_event
-a_all_ind_traits[,"chf_hist", 1] <- ukpds_pop$chf_hist
-a_all_ind_traits[,"esrd_event", 1] <- ukpds_pop$esrd_event
-a_all_ind_traits[,"esrd_hist", 1] <- ukpds_pop$esrd_hist
-a_all_ind_traits[,"ihd_event", 1] <- ukpds_pop$ihd_event
-a_all_ind_traits[,"ihd_hist", 1] <- ukpds_pop$ihd_hist
-a_all_ind_traits[,"mi_event", 1] <- ukpds_pop$mi_event
-a_all_ind_traits[,"mi_hist", 1] <- ukpds_pop$mi_hist
-a_all_ind_traits[,"pvd_event", 1] <- ukpds_pop$pvd_event
-a_all_ind_traits[,"stroke_event", 1] <- ukpds_pop$stroke_event
-a_all_ind_traits[,"stroke_hist", 1] <- ukpds_pop$stroke_hist
-a_all_ind_traits[,"ulcer_event", 1] <- ukpds_pop$ulcer_event
-a_all_ind_traits[,"ulcer_hist", 1] <- ukpds_pop$ulcer_hist
-a_all_ind_traits[,"lambda", 1] <- ukpds_pop$lambda
-a_all_ind_traits[,"rho", 1] <- ukpds_pop$rho
-a_all_ind_traits[,"death", 1] <- ukpds_pop$death
+# Fill patient trace 
+## First confirm all trait names in m_ukpds_pop and a_all_ind_traits match
+stopifnot(
+  all(dimnames(a_all_ind_traits)[[2]] %in% colnames(m_ukpds_pop))
+)
+## Identify m_ukpds_pop columns with time-invariant data
+v_t_invar_col_nms <- grep(
+  pattern = "^age_diag$|^black$|^indian$|^female$|^smoke$|_first$",
+  x = colnames(m_ukpds_pop), 
+  ignore.case = FALSE,
+  value = TRUE
+)
+## Identify m_ukpds_pop columns with time-varying data
+v_t_var_col_nms <- setdiff(
+  dimnames(a_all_ind_traits)[[2]], v_t_invar_col_nms
+)
+a_all_ind_traits[, v_t_var_col_nms, 1] <- m_ukpds_pop[
+  , v_t_var_col_nms, drop = FALSE
+]
+a_all_ind_traits[, v_t_invar_col_nms, ] <- m_ukpds_pop[
+  , v_t_invar_col_nms, drop = FALSE
+]
 
 # break array up into stuff individual traits
 a_ind_traits <- a_all_ind_traits[,1:62,] 
 # remaining array that captures lambda, rho and death
 a_other_ind_traits <- a_all_ind_traits[,63:65,] 
 
-
 # need this to be the same number of columns as the coefficient table is long/rows
 print(dim(a_ind_traits)) # to verify the dimensions
 print(dimnames(a_ind_traits)) # to verify the dimension names
-
-
 
 # Step 3: Define functions for risk factor progression ####
 # Function for linear progression of risk factors
@@ -652,9 +608,9 @@ a_ind_traits[,,7]
 
   m_summary <- matrix(   
     data = NA, 
-    nrow = length(cycles), 
+    nrow = length(v_cycle_nms), 
     ncol = 4,   
-    dimnames = list(cycles,column_names)  
+    dimnames = list(v_cycle_nms,column_names)  
   ) 
   m_summary <- m_summary[-nrow(m_summary), ]
 
