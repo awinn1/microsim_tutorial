@@ -127,6 +127,20 @@ print(dimnames(a_ind_traits)) # to verify the dimension names
 #' 
 #' @return Matrix containing the updated biomarker is stored.
 #' @export
+#' @examples
+#' /dontrun{
+#' # Calculate the updated value for the 'hba1c' biomarker
+#' m_updated_hba1c <- biomarker(
+#'   m_ind_traits = a_ind_traits[ , ,1],
+#'   a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits,
+#'   a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits,
+#'   biomarker_eq = "hba1c"
+#' )
+#'
+#' # The 'm_updated_hba1c' one-column matrix now contains the updated biomarker
+#' values. You can inspect the result:
+#' head(updated_hba1c)
+#' }
 biomarker <- function(
     m_ind_traits,
     a_coef_ukpds_ind_traits,
@@ -232,11 +246,9 @@ update_all_biomarkers <- function(
   return(m_ind_traits_row)
 }
 
-
 # Step 5: Define event functions (Weibull/Exponential and Logistic) ####
 # Weibull distribution function for event occurrence
 # Logistic regression for binary event prediction
-
 
 #' Calculate Transition Probability Based on a Weibull Model and Update Patient State
 #' Note: An exponential model is a special case of the Weibull model where the shape 
