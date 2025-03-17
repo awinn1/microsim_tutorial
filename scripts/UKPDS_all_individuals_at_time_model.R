@@ -27,7 +27,7 @@ n_coef <-  length(v_coef_names)  # Count the number of parameters
 v_factors_names <- colnames(m_UKPDS_coef[-1])  # Get column names excluding 'Parameter'
 
 # Determine the number of factors (columns)
-n_equa_names <- length(v_factors_names)  # Count the number of factors
+n_equa <- length(v_factors_names)  # Count the number of factors
 
 # allow for bootstrapped coefficients 
 boot <- 1
@@ -36,7 +36,7 @@ rep_names <- paste0("boot_rep_", 1:boot)
 #create an array that holds onto everything!
 a_coef_ukpds <- array(
   data = NA,
-  dim = c(n_coef, n_equa_names, boot),
+  dim = c(n_coef, n_equa, boot),
   dimnames = list(v_coef_names, v_factors_names, rep_names)
 )
 
