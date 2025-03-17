@@ -116,28 +116,29 @@ print(dimnames(a_ind_traits)) # to verify the dimension names
 #' This function calculates patient-specific factors to predict the time path of
 #' a biomarker. 
 #'
-#' @param a_ind_traits An array containing patient characteristics over time.
-#' @param a_coef_ukpds_ind_traits A 3D array of coefficients used for
+#' @param m_ind_traits A matrix containing patient characteristics at a specific
+#' time step.
+#' @param a_coef_ukpds_ind_traits A 3D array of coefficients used for 
 #' calculating risk.
+#' @param a_coef_ukpds_other_ind_traits A 3D array of other coefficients used
+#' for calculating risk.
 #' @param biomarker_eq A character string specifying the health outcome equation
 #' (e.g., "ihd").
-#' @param time_step An integer indicating the row in `m_ind_traits` to use for
-#' calculations.
 #' 
-#' @return The updated biomarker is stored.
+#' @return Matrix containing the updated biomarker is stored.
 #' @export
 biomarker <- function(
-    a_ind_traits, 
-    a_coef_ukpds_ind_traits, 
-    biomarker_eq,  
-    time_step) {
+    m_ind_traits,
+    a_coef_ukpds_ind_traits,
+    a_coef_ukpds_other_ind_traits,
+    biomarker_eq) {
   
   # Calculate patient-specific factors using model coefficients and patient data
-  updated_biomarker <- a_ind_traits[,,time_step] %*%
-    a_coef_ukpds_ind_traits[,  biomarker_eq, 1] +
-    a_coef_ukpds_other_ind_traits["lambda",  biomarker_eq, 1]
+  m_updated_biomarker <- m_ind_traits %*%
+    a_coef_ukpds_ind_traits[, biomarker_eq, 1] +
+    a_coef_ukpds_other_ind_traits["lambda", biomarker_eq, 1]
   
-  return(updated_biomarker)
+  return(m_updated_biomarker)
 }
 
 # Step 4: Create a function to apply all risk factor models ####
@@ -146,22 +147,38 @@ biomarker <- function(
 
 #' Update Multiple Biomarkers in a Transition Matrix
 #'
-#' This function updates multiple biomarker values in the transition matrix for a given time step.
+#' This function updates multiple biomarker values in the transition matrix for
+#' a given time step.
 #'
-#' @param a_ind_traits The patient trace, an array containing patient data with biomarker and event columns.
-#' @param a_coef_ukpds_ind_traits A coefficient matrix containing biomarker and event equations.
+#' @param m_ind_traits_row The patient matrix containing patient data with
+#' biomarker and event columns to be updated.
+#' @param m_ind_traits_step The patient matrix, an array containing patient data with
+#' biomarker and event columns.
+#' @param a_coef_ukpds_ind_traits A coefficient matrix containing biomarker and
+#' event equations.
 #' @param time_step An integer representing the current time step.
-#' @param next_row An integer indicating the row in `m_ind_traits` to update with new biomarker values.
+#' @param next_row An integer indicating the row in `m_ind_traits` to update
+#' with new biomarker values.
 #'
-#' @return The updated transition matrix `m_ind_traits` with new biomarker values in the specified row.
+#' @return The updated transition matrix `m_ind_traits` with new biomarker
+#' values in the specified row.
 #' 
 #' @examples
 #' # Example usage
-#' m_ind_traits <- update_all_biomarkers(m_ind_traits, a_coef_ukpds_ind_traits, time_step = 1, next_row = 2)
+#' m_ind_traits <- update_all_biomarkers(
+#'     m_ind_traits_row = a_ind_traits [, ,next_row], 
+#'     m_ind_traits_step =  a_ind_traits [, ,time_step],
+#'     a_coef_ukpds_ind_traits,
+#'     time_step = 1, 
+#'     next_row = 2
+#' )
 #'
 #' @export
-
-update_all_biomarkers <- function(a_ind_traits, a_coef_ukpds_ind_traits, time_step, next_row) {
+update_all_biomarkers <- function(
+    a_ind_traits, 
+    a_coef_ukpds_ind_traits, 
+    time_step, 
+    next_row) {
   # predict the next period (and perform transformations as needed)
   # the biomarkers use real values of variables, but the event equations use transformed variables
   a_ind_traits[, "a1c", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "hba1c", time_step = time_step)   
@@ -198,7 +215,6 @@ update_all_biomarkers <- function(a_ind_traits, a_coef_ukpds_ind_traits, time_st
   a_ind_traits[, "egfr_lt60", next_row] <- a_ind_traits[, "egfr_lt60", 1]   
   a_ind_traits[, "egfr_gte60", next_row] <- a_ind_traits[, "egfr_gte60", 1]   
   a_ind_traits[, "albumin_mm", next_row] <- a_ind_traits[, "albumin_mm", 1]  
-  
   
   # Return updated matrix
   return(a_ind_traits)
