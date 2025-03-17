@@ -336,27 +336,54 @@ weibull_event <- function(
 #' The function updates the provided `m_ind_traits` matrix with the event occurrence 
 #' at the specified time step.
 #'
-#' @param a_ind_traits A 3d array containing patient characteristics over time (slices).
-#' @param a_coef_ukpds_ind_traits A 3D array of coefficients used for calculating risk.
-#' @param health_outcome A character string specifying the health outcome equation (e.g., "ihd").
-#' @param health_event A character string specifying the health outcome event in the patient trace.
-#' @param time_step An integer indicating the row in `m_ind_traits` to use for calculations.
-#' 
-#' @return Whether the event occurred.
+#' @param m_ind_traits_step A matrix containing patient characteristics at a
+#' specific time step (obtained from `a_ind_traits[,,time_step]`).
+#' @param a_coef_ukpds_ind_traits A 3D array of coefficients used for
+#' calculating risk.
+#' @param a_coef_ukpds_other_ind_traits A 3D array of other coefficients used
+#' for calculating risk (e.g., lambda).
+#' @param health_outcome A character string specifying the health outcome
+#' equation (e.g., "ihd").
+#'  
+#' @return One-column matrix specifying whether the event occurred.
 #' @export
-logistic_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome, health_event, time_step) {
+#' 
+#' @examples
+#' \dontrun{
+#' time_step <- 1
+#' health_outcome <- "ihd"
+#'
+#' # Extract the matrix for the specific time step
+#' m_ind_traits_step <- a_ind_traits[,,time_step]
+#'
+#' # Calculate the probability of a health event
+#' event_occurred <- logistic_event(
+#'   m_ind_traits_step = m_ind_traits_step,
+#'   a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits,
+#'   a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits,
+#'   health_outcome = health_outcome
+#' )
+#'
+#' # Print whether the event occurred for each individual at this time step
+#' print(head(event_occurred))
+#' }
+logistic_event <- function(
+    m_ind_traits_step,
+    a_coef_ukpds_ind_traits,
+    a_coef_ukpds_other_ind_traits,
+    health_outcome) {
   
   # Calculate patient-specific factors using model coefficients and patient data
-  patient_factors <- (a_ind_traits[,,time_step] %*%  a_coef_ukpds_ind_traits[, health_outcome, 1] + 
-                        as.vector(a_coef_ukpds_other_ind_traits["lambda", health_outcome, 1]) )
+  patient_factors <- m_ind_traits_step %*%
+    a_coef_ukpds_ind_traits[, health_outcome, 1] +
+    as.vector(a_coef_ukpds_other_ind_traits["lambda", health_outcome, 1])
   
   # Calculate transition probability
-  trans_prob=1-(exp(-patient_factors)/(1+exp(-patient_factors)))^1
+  trans_prob <- 1-(exp(-patient_factors)/(1+exp(-patient_factors)))^1
   
   # Simulate whether the event occurs by comparing with a random uniform value
   event <- trans_prob > runif(1)
   
-
   # Return the value
   return(event)
 }
@@ -364,8 +391,6 @@ logistic_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome
 #
 # u <- logistic_event(m_ind_traits, a_coef_ukpds_ind_traits, health_outcome = "ulcer", health_event = "ulcer_event", time_step = 1)
 #m_ind_traits <- weibull_event(m_ind_traits, a_coef_ukpds_ind_traits, health_outcome = "ihd", health_event = "ihd_event", time_step = 1)
-
-
 
 # Step 6: Initialize event and history variables ####
 #' @title Update Health Events Over Time Steps
