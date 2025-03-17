@@ -250,35 +250,72 @@ update_all_biomarkers <- function(
 # Weibull distribution function for event occurrence
 # Logistic regression for binary event prediction
 
-#' Calculate Transition Probability Based on a Weibull Model and Update Patient State
-#' Note: An exponential model is a special case of the Weibull model where the shape 
-#' parameter (ρ) is set to 1, meaning the hazard function remains constant over time, 
-#' resulting in a constant rate of event occurrence rather than a time-dependent rate.
+#' Calculate Transition Probability Based on a Weibull Model and Update Patient
+#' State 
 #'
+#' @details
 #' This function calculates patient-specific factors, cumulative hazards, 
 #' and the transition probability for a given health outcome (e.g., "ihd"). 
-#' The function updates the provided `m_ind_traits` matrix with the event occurrence 
-#' at the specified time step.
+#' The function updates the provided `m_ind_traits` matrix with the event
+#' occurrence at the specified time step.
+#' Note: An exponential model is a special case of the Weibull model where the
+#' shape parameter (ρ) is set to 1, meaning the hazard function remains constant
+#' over time, resulting in a constant rate of event occurrence rather than a
+#' time-dependent rate.
 #'
-#' @param m_ind_traits A matrix containing patient characteristics over time.
-#' @param a_coef_ukpds_ind_traits A 3D array of coefficients used for calculating risk.
-#' @param health_outcome A character string specifying the health outcome equation (e.g., "ihd").
-#' @param health_event A character string specifying the health outcome event in the patient trace.
-#' @param time_step An integer indicating the row in `m_ind_traits` to use for calculations.
+#' @param a_ind_traits A 3D array containing patient characteristics at a time.
+#' @param a_coef_ukpds_ind_traits A 3D array of coefficients used for
+#' calculating risk.
+#' @param a_coef_ukpds_other_ind_traits A 3D array of other coefficients used
+#' for calculating risk (e.g., lambda).
+#' @param health_outcome A character string specifying the health outcome
+#' equation (e.g., "ihd").
+#' @param time_step An integer indicating the row in `m_ind_traits` to use for
+#' calculations.
 #' 
-#' @return Whether the event occurred.
+#' @return One-column matrix specifying whether the event occurred.
 #' @export
-weibull_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome, health_event, time_step) {
+#' 
+#' @examples
+#' \dontrun{
+#' time_step <- 1
+#' health_outcome <- "ihd"
+#'
+#' # Extract the matrix for the specific time step
+#' m_ind_traits_step <- a_ind_traits[,,time_step]
+#'
+#' # Calculate the probability of a health event
+#' event_occurred <- weibull_event(
+#'   m_ind_traits_step = m_ind_traits_step,
+#'   a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits,
+#'   a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits,
+#'   health_outcome = health_outcome
+#' )
+#'
+#' # Print whether the event occurred for each individual at this time step
+#' print(head(event_occurred))
+#' }
+weibull_event <- function(
+    m_ind_traits_step,
+    a_coef_ukpds_ind_traits,
+    a_coef_ukpds_other_ind_traits,
+    health_outcome) {
   
   # Calculate patient-specific factors using model coefficients and patient data
-  patient_factors <- (a_ind_traits[,,time_step] %*%  a_coef_ukpds_ind_traits[, health_outcome, 1] + 
-                        as.vector(a_coef_ukpds_other_ind_traits["lambda", health_outcome, 1]) )
+  patient_factors <- m_ind_traits_step %*%
+    a_coef_ukpds_ind_traits[, health_outcome, 1] +
+    as.vector(a_coef_ukpds_other_ind_traits["lambda", health_outcome, 1])
   
   # Compute cumulative hazard at the current time step
-  cum_hazard_t <- exp(patient_factors) * (a_ind_traits[, "diab_dur",time_step]^(a_coef_ukpds_other_ind_traits["rho", health_outcome, 1]) )
+  cum_hazard_t <- exp(patient_factors) *
+    (m_ind_traits_step[, "diab_dur"]^
+       (a_coef_ukpds_other_ind_traits["rho", health_outcome, 1]))
   
-  # Compute cumulative hazard at the next time step (by adding 1 year to diabetes duration)
-  cum_hazard_t1 <- exp(patient_factors) * ((a_ind_traits[, "diab_dur",time_step] + 1)^(a_coef_ukpds_other_ind_traits["rho", health_outcome, 1]) )
+  # Compute cumulative hazard at the next time step (by adding 1 year to
+  # diabetes duration)
+  cum_hazard_t1 <- exp(patient_factors) *
+    ((m_ind_traits_step[, "diab_dur"] + 1)^
+       (a_coef_ukpds_other_ind_traits["rho", health_outcome, 1]))
   
   # Calculate transition probability
   trans_prob <- 1 - exp(cum_hazard_t - cum_hazard_t1)
@@ -289,9 +326,6 @@ weibull_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome,
   # Return the updated matrix
   return(event)
 }
-
-
-
 
 #' Calculate Transition Probability Based on a Logistic Regression and Update Patient State 
 #'
