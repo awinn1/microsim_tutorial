@@ -164,23 +164,24 @@ biomarker <- function(
 #' This function updates multiple biomarker values in the transition matrix for
 #' a given time step.
 #'
-#' @param m_ind_traits_init A matrix containing patient characteristics at the initial time step
-#' (obtained from `a_ind_traits[,,1]`).
-#' @param m_ind_traits_row The patient matrix to update with new biomarker values
-#' (obtained from `a_ind_traits[,,next_row]`).
-#' @param m_ind_traits_step The patient matrix containing patient data at the current
-#' time step (obtained from `a_ind_traits[,,time_step]`).
+#' @param m_ind_traits_init A matrix containing patient characteristics at the
+#' initial time step (obtained from `a_ind_traits[,,1]`).
+#' @param m_ind_traits_row The patient matrix to update with new biomarker
+#' values (obtained from `a_ind_traits[,,next_row]`).
+#' @param m_ind_traits_step The patient matrix containing patient data at the
+#' current time step (obtained from `a_ind_traits[,,time_step]`).
 #' @param a_coef_ukpds_ind_traits A 3D array of coefficients used for
 #' calculating risk.
-#' @param a_coef_ukpds_other_ind_traits A 3D array of other coefficients used for
-#' calculating risk (e.g., lambda).
+#' @param a_coef_ukpds_other_ind_traits A 3D array of other coefficients used
+#' for calculating risk (e.g., lambda).
 #'
 #' @return The updated transition matrix `m_ind_traits_row` with new biomarker
 #' values.
+#' @export
 #'
 #' @examples
+#' \dontrun{
 #' # Assuming you have your a_ind_traits array
-#' n_rows <- dim(a_ind_traits)[1]
 #' time_step <- 1
 #' next_row <- 2
 #'
@@ -197,8 +198,7 @@ biomarker <- function(
 #'   a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits,
 #'   a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits
 #' )
-#'
-#' @export
+#' }
 update_all_biomarkers <- function(
     m_ind_traits_init,
     m_ind_traits_row,
