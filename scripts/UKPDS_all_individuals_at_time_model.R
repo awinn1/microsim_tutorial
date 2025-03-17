@@ -21,7 +21,7 @@ m_UKPDS_coef[is.na(m_UKPDS_coef)] <- 0
 v_coef_names <- m_UKPDS_coef$Parameter # Get row names from the 'Parameter' column
 
 # Determine the number of parameters (rows)
-n_coef_names <-  length(v_coef_names)  # Count the number of parameters
+n_coef <-  length(v_coef_names)  # Count the number of parameters
 
 # Extract factor names (used as column names), excluding the first column
 v_factors_names <- as.vector(colnames(m_UKPDS_coef[-1]))  # Get column names excluding 'Parameter'
@@ -36,7 +36,7 @@ rep_names <- paste0("boot_rep_", 1:boot)
 #create an array that holds onto everything!
 a_coef_ukpds <- array(
   data = NA,
-  dim = c(n_coef_names, n_equa_names, boot),
+  dim = c(n_coef, n_equa_names, boot),
   dimnames = list(v_coef_names, v_factors_names, rep_names)
 )
 
@@ -89,12 +89,11 @@ set.seed(seed)    # set the seed to ensure reproducible samples below
 ids <- paste("id",   1:num_i,    sep ="_")
 cycles <- paste("cycle", 0:num_cycles, sep ="_")
 
-nbr_coef_names <- n_coef_names
 # Create AN ARRAY with columns for each variable, row for each person, and a 
 # slice for each period
 a_all_ind_traits <- array(   
   data = NA, 
-  dim = c(num_i, nbr_coef_names, num_cycles+1),
+  dim = c(num_i, n_coef, num_cycles+1),
   dimnames = list(ids, v_coef_names , cycles )  
 )
 # need this to be the same number of columns as the coefficient table is long/rows
