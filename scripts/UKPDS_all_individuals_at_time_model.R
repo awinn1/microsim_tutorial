@@ -664,24 +664,55 @@ gompertz_event <- function(
 }
 
 #' @title Calculate Mortality Events for a Given Time Step
+#'
+#' @description This function calculates mortality events for a given time step
+#' based on new health events and medical history using Gompertz and logistic
+#' models.
+#'
+#' @param m_ind_traits_step A matrix containing patient-level data at the
+#' current time step (obtained from `a_ind_traits[,,time_step]`).
+#' @param m_other_ind_traits_step A matrix containing mortality status at the
+#' current time step (obtained from `a_other_ind_traits[,,time_step]`).
+#' @param m_other_ind_traits_prev_step A matrix containing mortality status at
+#' the previous time step (obtained from
+#' `a_other_ind_traits[,,max(1, time_step - 1)]`).
+#' @param m_ind_traits_prev_step A matrix containing patient-level data at the
+#' previous time step (obtained from `a_ind_traits[,,max(1, time_step - 1)]`).
+#' @param a_coef_ukpds_ind_traits A coefficient matrix used in Gompertz and
+#' logistic event calculations.
+#' @param a_coef_ukpds_other_ind_traits A coefficient matrix containing other
+#' parameters for Gompertz and logistic event calculations (e.g., lambda, rho).
+#'
+#' @return Numeric vector representing the mortality and should be assigned
+#' (saved) to column "death" in the matrix `m_other_ind_traits_step` or the
+#' array.
+#' @export
 #' 
-#' @description This function calculates mortality events for a given time step 
-#' based on new health events and medical history using Gompertz and logistic models.
-#'
-#' @param a_ind_traits An array containing patient-level data, including health event history.
-#' @param a_other_ind_traits An array containing lambda, rhos and death. 
-#' @param a_coef_ukpds_ind_traits A coefficient matrix used in Gompertz and logistic event calculations.
-#' @param time_step An integer specifying the time step at which mortality should be calculated.
-#'
-#' @return The updated `m_ind_traits` matrix with the mortality status recorded for the specified time step.
-#'
 #' @examples
 #' \dontrun{
-#' m_ind_traits <- mortality(m_ind_traits, a_coef_ukpds_ind_traits, time_step = 5)
-#' }
+#' time_step <- 1
+#' m_ind_traits_step <- a_ind_traits[,,time_step]
+#' m_other_ind_traits_step <- a_other_ind_traits[,,time_step]
+#' m_other_ind_traits_prev_step <- a_other_ind_traits[,,max(1, time_step - 1)]
+#' m_ind_traits_prev_step <- a_ind_traits[,,max(1, time_step - 1)]
 #'
-#' @export
-mortality <- function(a_ind_traits, a_other_ind_traits, a_coef_ukpds_ind_traits, time_step) {
+#' v_death_step <- mortality(
+#'   m_ind_traits_step = m_ind_traits_step,
+#'   m_other_ind_traits_step = m_other_ind_traits_step,
+#'   m_other_ind_traits_prev_step = m_other_ind_traits_prev_step,
+#'   m_ind_traits_prev_step = m_ind_traits_prev_step,
+#'   a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits,
+#'   a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits
+#' )
+#' print(head(v_death_step))
+#' }
+mortality <- function(
+    m_ind_traits_step, 
+    m_other_ind_traits_step, 
+    m_other_ind_traits_prev_step, 
+    m_ind_traits_prev_step, 
+    a_coef_ukpds_ind_traits, 
+    a_coef_ukpds_other_ind_traits) {
   
   # Calculate new health event occurrence and prior history
   
@@ -694,10 +725,10 @@ mortality <- function(a_ind_traits, a_other_ind_traits, a_coef_ukpds_ind_traits,
   
   # Get the maximum across those columns, for the given time_step
   # Calculate any new health event
-  new_event  <- max(a_ind_traits[, v_event_cols,time_step])
+  new_event  <- max(m_ind_traits_step[, v_event_cols])
   # Calculate any prior history of health events
-  any_history <- max(a_ind_traits[, v_hist_cols, time_step])  
-
+  any_history <- max(m_ind_traits_step[, v_hist_cols])
+  
   
   # Determine event-history combinations
   nhne <- new_event == 0 & any_history == 0  # No history, no event
@@ -706,27 +737,45 @@ mortality <- function(a_ind_traits, a_other_ind_traits, a_coef_ukpds_ind_traits,
   yhye <- new_event == 1 & any_history == 1  # Yes history, new event
   
   # Mortality calculations using Gompertz and logistic models
-  death_nhne <- gompertz_event(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome = "death_nhne", 
-                               health_event = "death_nhne", time_step = time_step)
+  death_nhne <- gompertz_event(
+    m_ind_traits_step = m_ind_traits_step, 
+    a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits, 
+    a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits, 
+    health_outcome = "death_nhne"
+  )
   
-  death_yhne <- gompertz_event(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome = "death_yhne", 
-                               health_event = "death_yhne", time_step = time_step)
+  death_yhne <- gompertz_event(
+    m_ind_traits_step = m_ind_traits_step, 
+    a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits, 
+    a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits,
+    health_outcome = "death_yhne"
+  )
   
-  death_nhye <- logistic_event(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome = "death_1st_event", 
-                               health_event = "death_nhye", time_step = time_step)
+  death_nhye <- logistic_event(
+    m_ind_traits_step = m_ind_traits_step,
+    a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits,
+    a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits, 
+    health_outcome = "death_1st_event"
+  )
   
-  death_yhye <- logistic_event(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome = "death_yhye", 
-                               health_event = "death_yhye", time_step = time_step)
+  death_yhye <- logistic_event(
+    m_ind_traits_step = m_ind_traits_step, 
+    a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits, 
+    a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits, 
+    health_outcome = "death_yhye"
+  )
   
   # Calculate new mortality status
-  new_death <- nhne * death_nhne + yhne * death_yhne + nhye * death_nhye + yhye * death_yhye
+  new_death <- nhne * death_nhne + 
+    yhne * death_yhne + 
+    nhye * death_nhye + 
+    yhye * death_yhye
   
   # Update the mortality status in the matrix for the given time step
-  a_other_ind_traits[, "death" , time_step] <- new_death + a_other_ind_traits[, "death", max(time_step - 1, 1)]
+  m_deaths <- as.integer(new_death) + m_other_ind_traits_prev_step[, "death"]
   
-  return(a_other_ind_traits)
+  return(m_deaths)
 }
-
 
 # Step 8: Simulate disease progression and mortality for all patients ####
 # Initialize patient data
