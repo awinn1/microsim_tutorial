@@ -648,7 +648,8 @@ a_ind_traits<- update_all_biomarkers(a_ind_traits, a_coef_ukpds_ind_traits,
 
 #print(patient)
 #create a patient population 
-for (time_step in 4:num_cycles) {
+# for (time_step in 2:num_cycles)
+  for (time_step in 2:8) {
   a_ind_traits[ ,"age",time_step]<-a_ind_traits[,"age", max(1,time_step-1)] +1
   a_ind_traits[ ,"diab_dur",time_step]<-a_ind_traits[,"diab_dur" , max(1,time_step-1)]+1    
   a_ind_traits[,"diab_dur_log",time_step]<- (log(a_ind_traits[,"diab_dur", time_step]))
