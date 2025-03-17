@@ -265,15 +265,14 @@ update_all_biomarkers <- function(
 #' over time, resulting in a constant rate of event occurrence rather than a
 #' time-dependent rate.
 #'
-#' @param a_ind_traits A 3D array containing patient characteristics at a time.
+#' @param m_ind_traits_step A matrix containing patient characteristics at a
+#' specific time step (obtained from `a_ind_traits[,,time_step]`).
 #' @param a_coef_ukpds_ind_traits A 3D array of coefficients used for
 #' calculating risk.
 #' @param a_coef_ukpds_other_ind_traits A 3D array of other coefficients used
 #' for calculating risk (e.g., lambda).
 #' @param health_outcome A character string specifying the health outcome
 #' equation (e.g., "ihd").
-#' @param time_step An integer indicating the row in `m_ind_traits` to use for
-#' calculations.
 #' 
 #' @return One-column matrix specifying whether the event occurred.
 #' @export
