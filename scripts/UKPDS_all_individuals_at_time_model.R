@@ -150,74 +150,86 @@ biomarker <- function(
 #' This function updates multiple biomarker values in the transition matrix for
 #' a given time step.
 #'
-#' @param m_ind_traits_row The patient matrix containing patient data with
-#' biomarker and event columns to be updated.
-#' @param m_ind_traits_step The patient matrix, an array containing patient data with
-#' biomarker and event columns.
-#' @param a_coef_ukpds_ind_traits A coefficient matrix containing biomarker and
-#' event equations.
-#' @param time_step An integer representing the current time step.
-#' @param next_row An integer indicating the row in `m_ind_traits` to update
-#' with new biomarker values.
+#' @param m_ind_traits_init A matrix containing patient characteristics at the initial time step
+#' (obtained from `a_ind_traits[,,1]`).
+#' @param m_ind_traits_row The patient matrix to update with new biomarker values
+#' (obtained from `a_ind_traits[,,next_row]`).
+#' @param m_ind_traits_step The patient matrix containing patient data at the current
+#' time step (obtained from `a_ind_traits[,,time_step]`).
+#' @param a_coef_ukpds_ind_traits A 3D array of coefficients used for
+#' calculating risk.
+#' @param a_coef_ukpds_other_ind_traits A 3D array of other coefficients used for
+#' calculating risk (e.g., lambda).
 #'
-#' @return The updated transition matrix `m_ind_traits` with new biomarker
-#' values in the specified row.
-#' 
+#' @return The updated transition matrix `m_ind_traits_row` with new biomarker
+#' values.
+#'
 #' @examples
-#' # Example usage
-#' m_ind_traits <- update_all_biomarkers(
-#'     m_ind_traits_row = a_ind_traits [, ,next_row], 
-#'     m_ind_traits_step =  a_ind_traits [, ,time_step],
-#'     a_coef_ukpds_ind_traits,
-#'     time_step = 1, 
-#'     next_row = 2
+#' # Assuming you have your a_ind_traits array
+#' n_rows <- dim(a_ind_traits)[1]
+#' time_step <- 1
+#' next_row <- 2
+#'
+#' m_ind_traits_init <- a_ind_traits[,,1]
+#' m_ind_traits_row <- a_ind_traits[,,next_row]
+#' m_ind_traits_step <- a_ind_traits[,,time_step]
+#'
+#' # Assuming a_coef_ukpds_ind_traits and a_coef_ukpds_other_ind_traits are defined
+#'
+#' updated_m_ind_traits_row <- update_all_biomarkers(
+#'   m_ind_traits_init = m_ind_traits_init,
+#'   m_ind_traits_row = m_ind_traits_row,
+#'   m_ind_traits_step = m_ind_traits_step,
+#'   a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits,
+#'   a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits
 #' )
 #'
 #' @export
 update_all_biomarkers <- function(
-    a_ind_traits, 
-    a_coef_ukpds_ind_traits, 
-    time_step, 
-    next_row) {
+    m_ind_traits_init,
+    m_ind_traits_row,
+    m_ind_traits_step,
+    a_coef_ukpds_ind_traits,
+    a_coef_ukpds_other_ind_traits) {
   # predict the next period (and perform transformations as needed)
   # the biomarkers use real values of variables, but the event equations use transformed variables
-  a_ind_traits[, "a1c", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "hba1c", time_step = time_step)   
-  a_ind_traits[, "sbp_real", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "sbp", time_step = time_step)   
-  a_ind_traits[, "sbp", next_row] <- a_ind_traits[, "sbp_real", next_row] / 10   
-  a_ind_traits[, "ldl_real", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "ldl", time_step = time_step)   
-  a_ind_traits[, "ldl", next_row] <- a_ind_traits[, "ldl_real", next_row] * 10   
-  a_ind_traits[, "hdl_real", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "hdl", time_step = time_step)   
-  a_ind_traits[, "hdl", next_row] <- a_ind_traits[, "hdl_real", next_row] * 10    
-  a_ind_traits[, "bmi", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "bmi", time_step = time_step)   
-  a_ind_traits[, "heart_rate_real", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "heart_rate", time_step = time_step)   
-  a_ind_traits[, "heart_rate", next_row] <- a_ind_traits[, "heart_rate_real", next_row] / 10   
-  a_ind_traits[, "wbc", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "wbc", time_step = time_step)   
-  a_ind_traits[, "heamo", next_row] <- biomarker(a_ind_traits, a_coef_ukpds_ind_traits, biomarker_eq = "haem", time_step = time_step)         
+  m_ind_traits_row[, "a1c"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "hba1c")
+  m_ind_traits_row[, "sbp_real"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "sbp")
+  m_ind_traits_row[, "sbp"] <- m_ind_traits_row[, "sbp_real"] / 10
+  m_ind_traits_row[, "ldl_real"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "ldl")
+  m_ind_traits_row[, "ldl"] <- m_ind_traits_row[, "ldl_real"] * 10
+  m_ind_traits_row[, "hdl_real"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "hdl")
+  m_ind_traits_row[, "hdl"] <- m_ind_traits_row[, "hdl_real"] * 10
+  m_ind_traits_row[, "bmi"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "bmi")
+  m_ind_traits_row[, "heart_rate_real"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "heart_rate")
+  m_ind_traits_row[, "heart_rate"] <- m_ind_traits_row[, "heart_rate_real"] / 10
+  m_ind_traits_row[, "wbc"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "wbc")
+  m_ind_traits_row[, "heamo"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "haem")
   
-  # Update lag and first occurrence columns   
-  a_ind_traits[, "a1c_lag", next_row] <- a_ind_traits[, "a1c", time_step]   
-  a_ind_traits[, "bmi_lag", next_row] <- a_ind_traits[, "bmi", time_step]   
-  a_ind_traits[, "bmi_lt18_5", next_row] <- as.integer(a_ind_traits[, "bmi", next_row] < 18.5)   
-  a_ind_traits[, "bmi_gte25", next_row] <- as.integer(a_ind_traits[, "bmi", next_row] >= 25)         
+  # Update lag and first occurrence columns
+  m_ind_traits_row[, "a1c_lag"] <- m_ind_traits_step[, "a1c"]
+  m_ind_traits_row[, "bmi_lag"] <- m_ind_traits_step[, "bmi"]
+  m_ind_traits_row[, "bmi_lt18_5"] <- as.integer(m_ind_traits_row[, "bmi"] < 18.5)
+  m_ind_traits_row[, "bmi_gte25"] <- as.integer(m_ind_traits_row[, "bmi"] >= 25)
   
-  a_ind_traits[, "hdl_lag", next_row] <- a_ind_traits[, "hdl_real", time_step]      
-  a_ind_traits[, "heart_rate_lag", next_row] <- a_ind_traits[, "heart_rate_real", time_step]   
+  m_ind_traits_row[, "hdl_lag"] <- m_ind_traits_step[, "hdl_real"]
+  m_ind_traits_row[, "heart_rate_lag"] <- m_ind_traits_step[, "heart_rate_real"]
   
-  # Check if this is functioning as a spline   
-  a_ind_traits[, "ldl_gt35", next_row] <- as.integer(a_ind_traits[, "ldl_real", next_row] > 35) / 10   
-  a_ind_traits[, "ldl_lag", next_row] <- a_ind_traits[, "ldl_real", time_step]   
-  a_ind_traits[, "sbp_lag", next_row] <- a_ind_traits[, "sbp_real", time_step]   
-  a_ind_traits[, "wbc_lag", next_row] <- a_ind_traits[, "wbc", time_step]      
+  # Check if this is functioning as a spline
+  m_ind_traits_row[, "ldl_gt35"] <- as.integer(m_ind_traits_row[, "ldl_real"] > 35) / 10
+  m_ind_traits_row[, "ldl_lag"] <- m_ind_traits_step[, "ldl_real"]
+  m_ind_traits_row[, "sbp_lag"] <- m_ind_traits_step[, "sbp_real"]
+  m_ind_traits_row[, "wbc_lag"] <- m_ind_traits_step[, "wbc"]
   
-  # Update additional values   
-  a_ind_traits[, "egfr", next_row] <- a_ind_traits[, "egfr", 1]   
-  a_ind_traits[, "egfr_real", next_row] <- a_ind_traits[, "egfr_real", 1]   
-  a_ind_traits[, "egfr_lt60", next_row] <- a_ind_traits[, "egfr_lt60", 1]   
-  a_ind_traits[, "egfr_gte60", next_row] <- a_ind_traits[, "egfr_gte60", 1]   
-  a_ind_traits[, "albumin_mm", next_row] <- a_ind_traits[, "albumin_mm", 1]  
+  # Update additional values
+  m_ind_traits_row[, "egfr"] <- m_ind_traits_init[, "egfr"]
+  m_ind_traits_row[, "egfr_real"] <- m_ind_traits_init[, "egfr_real"]
+  m_ind_traits_row[, "egfr_lt60"] <- m_ind_traits_init[, "egfr_lt60"]
+  m_ind_traits_row[, "egfr_gte60"] <- m_ind_traits_init[, "egfr_gte60"]
+  m_ind_traits_row[, "albumin_mm"] <- m_ind_traits_init[, "albumin_mm"]
   
   # Return updated matrix
-  return(a_ind_traits)
+  return(m_ind_traits_row)
 }
 
 
