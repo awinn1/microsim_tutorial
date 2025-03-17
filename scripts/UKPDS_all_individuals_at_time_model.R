@@ -69,7 +69,7 @@ v_cycle_nms <- paste("cycle", 0:num_cycles, sep ="_")
 # slice for each period
 a_all_ind_traits <- array(   
   data = NA, 
-  dim = c(num_i, n_coef, num_cycles+1),
+  dim = c(num_i, n_coef, num_cycles + 1),
   dimnames = list(v_ids, v_coef_names , v_cycle_nms )  
 )
 # need this to be the same number of columns as the coefficient table is long/rows
@@ -168,7 +168,7 @@ biomarker <- function(
 #'
 #' @param m_ind_traits_init A matrix containing patient characteristics at the
 #' initial time step (obtained from `a_ind_traits[,,1]`).
-#' @param m_ind_traits_row The patient matrix to update with new biomarker
+#' @param m_ind_traits_nStep The patient matrix to update with new biomarker
 #' values (obtained from `a_ind_traits[,,next_row]`).
 #' @param m_ind_traits_step The patient matrix containing patient data at the
 #' current time step (obtained from `a_ind_traits[,,time_step]`).
@@ -177,7 +177,7 @@ biomarker <- function(
 #' @param a_coef_ukpds_other_ind_traits A 3D array of other coefficients used
 #' for calculating risk (e.g., lambda).
 #'
-#' @return The updated transition matrix `m_ind_traits_row` with new biomarker
+#' @return The updated transition matrix `m_ind_traits_nStep` with new biomarker
 #' values.
 #' @export
 #'
@@ -188,14 +188,14 @@ biomarker <- function(
 #' next_row <- 2
 #'
 #' m_ind_traits_init <- a_ind_traits[,,1]
-#' m_ind_traits_row <- a_ind_traits[,,next_row]
+#' m_ind_traits_nStep <- a_ind_traits[,,next_row]
 #' m_ind_traits_step <- a_ind_traits[,,time_step]
 #'
 #' # Assuming a_coef_ukpds_ind_traits and a_coef_ukpds_other_ind_traits are defined
 #'
-#' updated_m_ind_traits_row <- update_all_biomarkers(
+#' updated_m_ind_traits_nStep <- update_all_biomarkers(
 #'   m_ind_traits_init = m_ind_traits_init,
-#'   m_ind_traits_row = m_ind_traits_row,
+#'   m_ind_traits_nStep = m_ind_traits_nStep,
 #'   m_ind_traits_step = m_ind_traits_step,
 #'   a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits,
 #'   a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits
@@ -203,49 +203,49 @@ biomarker <- function(
 #' }
 update_all_biomarkers <- function(
     m_ind_traits_init,
-    m_ind_traits_row,
+    m_ind_traits_nStep,
     m_ind_traits_step,
     a_coef_ukpds_ind_traits,
     a_coef_ukpds_other_ind_traits) {
   # predict the next period (and perform transformations as needed)
   # the biomarkers use real values of variables, but the event equations use transformed variables
-  m_ind_traits_row[, "a1c"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "hba1c")
-  m_ind_traits_row[, "sbp_real"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "sbp")
-  m_ind_traits_row[, "sbp"] <- m_ind_traits_row[, "sbp_real"] / 10
-  m_ind_traits_row[, "ldl_real"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "ldl")
-  m_ind_traits_row[, "ldl"] <- m_ind_traits_row[, "ldl_real"] * 10
-  m_ind_traits_row[, "hdl_real"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "hdl")
-  m_ind_traits_row[, "hdl"] <- m_ind_traits_row[, "hdl_real"] * 10
-  m_ind_traits_row[, "bmi"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "bmi")
-  m_ind_traits_row[, "heart_rate_real"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "heart_rate")
-  m_ind_traits_row[, "heart_rate"] <- m_ind_traits_row[, "heart_rate_real"] / 10
-  m_ind_traits_row[, "wbc"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "wbc")
-  m_ind_traits_row[, "heamo"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "haem")
+  m_ind_traits_nStep[, "a1c"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "hba1c")
+  m_ind_traits_nStep[, "sbp_real"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "sbp")
+  m_ind_traits_nStep[, "sbp"] <- m_ind_traits_nStep[, "sbp_real"] / 10
+  m_ind_traits_nStep[, "ldl_real"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "ldl")
+  m_ind_traits_nStep[, "ldl"] <- m_ind_traits_nStep[, "ldl_real"] * 10
+  m_ind_traits_nStep[, "hdl_real"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "hdl")
+  m_ind_traits_nStep[, "hdl"] <- m_ind_traits_nStep[, "hdl_real"] * 10
+  m_ind_traits_nStep[, "bmi"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "bmi")
+  m_ind_traits_nStep[, "heart_rate_real"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "heart_rate")
+  m_ind_traits_nStep[, "heart_rate"] <- m_ind_traits_nStep[, "heart_rate_real"] / 10
+  m_ind_traits_nStep[, "wbc"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "wbc")
+  m_ind_traits_nStep[, "heamo"] <- biomarker(m_ind_traits_step, a_coef_ukpds_ind_traits, a_coef_ukpds_other_ind_traits, biomarker_eq = "haem")
   
   # Update lag and first occurrence columns
-  m_ind_traits_row[, "a1c_lag"] <- m_ind_traits_step[, "a1c"]
-  m_ind_traits_row[, "bmi_lag"] <- m_ind_traits_step[, "bmi"]
-  m_ind_traits_row[, "bmi_lt18_5"] <- as.integer(m_ind_traits_row[, "bmi"] < 18.5)
-  m_ind_traits_row[, "bmi_gte25"] <- as.integer(m_ind_traits_row[, "bmi"] >= 25)
+  m_ind_traits_nStep[, "a1c_lag"] <- m_ind_traits_step[, "a1c"]
+  m_ind_traits_nStep[, "bmi_lag"] <- m_ind_traits_step[, "bmi"]
+  m_ind_traits_nStep[, "bmi_lt18_5"] <- as.integer(m_ind_traits_nStep[, "bmi"] < 18.5)
+  m_ind_traits_nStep[, "bmi_gte25"] <- as.integer(m_ind_traits_nStep[, "bmi"] >= 25)
   
-  m_ind_traits_row[, "hdl_lag"] <- m_ind_traits_step[, "hdl_real"]
-  m_ind_traits_row[, "heart_rate_lag"] <- m_ind_traits_step[, "heart_rate_real"]
+  m_ind_traits_nStep[, "hdl_lag"] <- m_ind_traits_step[, "hdl_real"]
+  m_ind_traits_nStep[, "heart_rate_lag"] <- m_ind_traits_step[, "heart_rate_real"]
   
   # Check if this is functioning as a spline
-  m_ind_traits_row[, "ldl_gt35"] <- as.integer(m_ind_traits_row[, "ldl_real"] > 35) / 10
-  m_ind_traits_row[, "ldl_lag"] <- m_ind_traits_step[, "ldl_real"]
-  m_ind_traits_row[, "sbp_lag"] <- m_ind_traits_step[, "sbp_real"]
-  m_ind_traits_row[, "wbc_lag"] <- m_ind_traits_step[, "wbc"]
+  m_ind_traits_nStep[, "ldl_gt35"] <- as.integer(m_ind_traits_nStep[, "ldl_real"] > 35) / 10
+  m_ind_traits_nStep[, "ldl_lag"] <- m_ind_traits_step[, "ldl_real"]
+  m_ind_traits_nStep[, "sbp_lag"] <- m_ind_traits_step[, "sbp_real"]
+  m_ind_traits_nStep[, "wbc_lag"] <- m_ind_traits_step[, "wbc"]
   
   # Update additional values
-  m_ind_traits_row[, "egfr"] <- m_ind_traits_init[, "egfr"]
-  m_ind_traits_row[, "egfr_real"] <- m_ind_traits_init[, "egfr_real"]
-  m_ind_traits_row[, "egfr_lt60"] <- m_ind_traits_init[, "egfr_lt60"]
-  m_ind_traits_row[, "egfr_gte60"] <- m_ind_traits_init[, "egfr_gte60"]
-  m_ind_traits_row[, "albumin_mm"] <- m_ind_traits_init[, "albumin_mm"]
+  m_ind_traits_nStep[, "egfr"] <- m_ind_traits_init[, "egfr"]
+  m_ind_traits_nStep[, "egfr_real"] <- m_ind_traits_init[, "egfr_real"]
+  m_ind_traits_nStep[, "egfr_lt60"] <- m_ind_traits_init[, "egfr_lt60"]
+  m_ind_traits_nStep[, "egfr_gte60"] <- m_ind_traits_init[, "egfr_gte60"]
+  m_ind_traits_nStep[, "albumin_mm"] <- m_ind_traits_init[, "albumin_mm"]
   
   # Return updated matrix
-  return(m_ind_traits_row)
+  return(m_ind_traits_nStep)
 }
 
 # Step 5: Define event functions (Weibull/Exponential and Logistic) ####
@@ -673,10 +673,10 @@ gompertz_event <- function(
 #' current time step (obtained from `a_ind_traits[,,time_step]`).
 #' @param m_other_ind_traits_step A matrix containing mortality status at the
 #' current time step (obtained from `a_other_ind_traits[,,time_step]`).
-#' @param m_other_ind_traits_prev_step A matrix containing mortality status at
+#' @param m_other_ind_traits_pStep A matrix containing mortality status at
 #' the previous time step (obtained from
 #' `a_other_ind_traits[,,max(1, time_step - 1)]`).
-#' @param m_ind_traits_prev_step A matrix containing patient-level data at the
+#' @param m_ind_traits_pStep A matrix containing patient-level data at the
 #' previous time step (obtained from `a_ind_traits[,,max(1, time_step - 1)]`).
 #' @param a_coef_ukpds_ind_traits A coefficient matrix used in Gompertz and
 #' logistic event calculations.
@@ -693,14 +693,14 @@ gompertz_event <- function(
 #' time_step <- 1
 #' m_ind_traits_step <- a_ind_traits[,,time_step]
 #' m_other_ind_traits_step <- a_other_ind_traits[,,time_step]
-#' m_other_ind_traits_prev_step <- a_other_ind_traits[,,max(1, time_step - 1)]
-#' m_ind_traits_prev_step <- a_ind_traits[,,max(1, time_step - 1)]
+#' m_other_ind_traits_pStep <- a_other_ind_traits[,,max(1, time_step - 1)]
+#' m_ind_traits_pStep <- a_ind_traits[,,max(1, time_step - 1)]
 #'
 #' v_death_step <- mortality(
 #'   m_ind_traits_step = m_ind_traits_step,
 #'   m_other_ind_traits_step = m_other_ind_traits_step,
-#'   m_other_ind_traits_prev_step = m_other_ind_traits_prev_step,
-#'   m_ind_traits_prev_step = m_ind_traits_prev_step,
+#'   m_other_ind_traits_pStep = m_other_ind_traits_pStep,
+#'   m_ind_traits_pStep = m_ind_traits_pStep,
 #'   a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits,
 #'   a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits
 #' )
@@ -709,8 +709,8 @@ gompertz_event <- function(
 mortality <- function(
     m_ind_traits_step, 
     m_other_ind_traits_step, 
-    m_other_ind_traits_prev_step, 
-    m_ind_traits_prev_step, 
+    m_other_ind_traits_pStep, 
+    m_ind_traits_pStep, 
     a_coef_ukpds_ind_traits, 
     a_coef_ukpds_other_ind_traits) {
   
@@ -772,7 +772,7 @@ mortality <- function(
     yhye * death_yhye
   
   # Update the mortality status in the matrix for the given time step
-  m_deaths <- as.integer(new_death) + m_other_ind_traits_prev_step[, "death"]
+  m_deaths <- as.integer(new_death) + m_other_ind_traits_pStep[, "death"]
   
   return(m_deaths)
 }
@@ -784,10 +784,9 @@ mortality <- function(
 # discount rate 
 
 
-# Step 9: Simulate disease progression and mortality for 999 additional patients
+# Step 9: Simulate disease progression and mortality for 999 additional patients  ####
 # Loop over all patients
 # Store and summarize population-level results
-
 
 discount_rate <-0.03
 # qalys
@@ -823,109 +822,142 @@ column_names <- list("cost", "qalys", "disc_costs", "disc_qalys")
 patient_summary_file <- matrix(   
   data = NA, 
   nrow = num_i, 
-  ncol = 4,   
-  dimnames = list(c(1:250000),column_names)  
+  ncol = 4,
+  dimnames = list(NULL,column_names)  # Removing row names saves 80% mem (16 MB)
 )
 
 ptm <- proc.time()
 
-# predict 2nd period biomarkers
-a_ind_traits<- update_all_biomarkers(a_ind_traits, a_coef_ukpds_ind_traits, 
-                                     time_step = 1, next_row = 2) 
+# Extract first slice, matrix of initial values
+m_ind_traits_init <- a_ind_traits[, , 1]
 
-#print(patient)
-#create a patient population 
-for (time_step in 4:num_cycles) {
-  a_ind_traits[ ,"age",time_step]<-a_ind_traits[,"age", max(1,time_step-1)] +1
-  a_ind_traits[ ,"diab_dur",time_step]<-a_ind_traits[,"diab_dur" , max(1,time_step-1)]+1    
-  a_ind_traits[,"diab_dur_log",time_step]<- (log(a_ind_traits[,"diab_dur", time_step]))
-  
-  # a_ind_traits<- update_all_biomarkers(a_ind_traits, a_coef_ukpds_ind_traits, 
-  #                                      time_step = time_step, next_row = time_step+1) 
+# predict 2nd period biomarkers
+a_ind_traits[, , 2] <-  update_all_biomarkers(
+  m_ind_traits_init = m_ind_traits_init,
+  m_ind_traits_nStep  = a_ind_traits[,, 2],
+  m_ind_traits_step = a_ind_traits[,, 1],
+  a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits,
+  a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits
+)
+
+# create a patient population 
+for (time_step in 2:num_cycles) {
+  a_ind_traits[, "age", time_step] <- a_ind_traits[
+    ,"age", max(1, time_step - 1)
+  ] + 1
+  a_ind_traits[, "diab_dur", time_step] <- a_ind_traits[
+    ,"diab_dur" , max(1, time_step - 1)
+  ] + 1    
+  a_ind_traits[, "diab_dur_log", time_step] <- log(
+    a_ind_traits[,"diab_dur", time_step]
+  )
   
   # ready to simulate 
+  
   # event prediction at t
-  a_ind_traits <- update_health_events(a_ind_traits, a_coef_ukpds_ind_traits, 
-                                       time_step = time_step)
-  # mortality prediction at t
-
-  a_other_ind_traits <- mortality(a_ind_traits, a_other_ind_traits, a_coef_ukpds_ind_traits, time_step = time_step)
-  #predict the risk factors for the next cycle (t+1) 
-
-  a_ind_traits<- update_all_biomarkers(a_ind_traits, a_coef_ukpds_ind_traits, time_step = time_step, next_row = time_step+1) 
-
+  a_ind_traits[,, time_step] <- update_health_events(
+    m_ind_traits_init = m_ind_traits_init,
+    m_ind_traits_step = a_ind_traits[,, time_step],
+    m_ind_traits_pStep = a_ind_traits[,, time_step - 1],
+    a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits,
+    a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits
+  )
+  
+  # mortality prediction at t  time_step <- 1
+  a_other_ind_traits[, "death" , time_step] <- mortality(
+    m_ind_traits_step = a_ind_traits[,, time_step],
+    m_ind_traits_pStep = a_ind_traits[,, max(1, time_step - 1)],
+    m_other_ind_traits_step = a_other_ind_traits[,, time_step],
+    m_other_ind_traits_pStep = a_other_ind_traits[,, max(1, time_step - 1)],
+    a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits,
+    a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits
+  )
+  
+  # predict the risk factors for the next cycle (t+1) 
+  a_ind_traits[, , time_step + 1] <-  update_all_biomarkers(
+    m_ind_traits_init = m_ind_traits_init,
+    m_ind_traits_nStep  = a_ind_traits[,, time_step + 1],
+    m_ind_traits_step = a_ind_traits[,, time_step],
+    a_coef_ukpds_ind_traits = a_coef_ukpds_ind_traits,
+    a_coef_ukpds_other_ind_traits = a_coef_ukpds_other_ind_traits
+  )
+  
+  # provide some feedback to the console
+  if(time_step/2 == round(time_step/2,0)) {
+    cat('\r', paste(time_step/num_cycles * 100, "% done", sep = " "))
+  }
 }
 
 # did it work?!?
-a_ind_traits[,,7]
+# a_ind_traits[,,7]
 
 (proc.time() - ptm)/60
+# > (proc.time() - ptm)/60 [8 cycles]
+#    user  system elapsed 
+# 0.10830 0.03440 0.15965 
+# > (proc.time() - ptm)/60 [20 cycles]
+#      user    system   elapsed 
+# 0.2674667 0.0596500 0.3432000 
+# > (proc.time() - ptm)/60
+#       user     system    elapsed [20 cycles]
+# 0.26766667 0.05363333 0.33563333
 
- # m_ind_traits_new <- m_ind_traits[-nrow(m_ind_traits), ]
+# Summary matrix
+m_summary <- matrix(   
+  data = NA, 
+  nrow = length(v_cycle_nms), 
+  ncol = 4,   
+  dimnames = list(v_cycle_nms, column_names)  
+) 
+m_summary <- m_summary[-nrow(m_summary), ]
+
+for (time_step in 1:num_cycles) {
+  m_summary[time_step, "cost"] <- 
+    as.double(m_other_ind_traits[time_step,"death"]==0)*c_baseline + 
+    as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step,"blindness_event"] * c_blindness_e +
+    as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step,"blindness_hist"] * c_blindness_c +
+    as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "amp_event"] * c_amp_e + 
+    as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "amp_event2"] * c_amp_e + 
+    as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "amp_hist"] * c_amp_c + 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "chf_event"] * c_chf_e + 
+    as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "chf_hist"] * c_chf_c + 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "esrd_event"] * c_esrd_e + 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "esrd_hist"] * c_esrd_c + 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ihd_event"] * c_ihd_e + 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ihd_hist"] * c_ihd_c + 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "mi_event"] * c_mi_e + 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "mi_hist"] * c_mi_c + 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "stroke_event"] * c_stroke_e + 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "stroke_hist"] * c_stroke_c + 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ulcer_event"] * c_ulcer_e + 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ulcer_hist"] * c_ulcer_c
   
- 
-
-  m_summary <- matrix(   
-    data = NA, 
-    nrow = length(v_cycle_nms), 
-    ncol = 4,   
-    dimnames = list(v_cycle_nms,column_names)  
-  ) 
-  m_summary <- m_summary[-nrow(m_summary), ]
-
-  for (time_step in 1:num_cycles) {
-    m_summary[time_step, "cost"]<- as.double(m_other_ind_traits[time_step,"death"]==0)*c_baseline + 
-      as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step,"blindness_event"] * c_blindness_e +
-      as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step,"blindness_hist"] * c_blindness_c +
-      as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "amp_event"] * c_amp_e + 
-      as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "amp_event2"] * c_amp_e + 
-      as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "amp_hist"] * c_amp_c + 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "chf_event"] * c_chf_e + 
-      as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "chf_hist"] * c_chf_c + 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "esrd_event"] * c_esrd_e + 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "esrd_hist"] * c_esrd_c + 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ihd_event"] * c_ihd_e + 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ihd_hist"] * c_ihd_c + 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "mi_event"] * c_mi_e + 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "mi_hist"] * c_mi_c + 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "stroke_event"] * c_stroke_e + 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "stroke_hist"] * c_stroke_c + 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ulcer_event"] * c_ulcer_e + 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ulcer_hist"] * c_ulcer_c
-    
-    m_summary[time_step, "qalys"]<- as.double(m_other_ind_traits[time_step,"death"]==0)*q_baseline + min(
-      as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step,"blindness_event"] * q_blindness ,
-      as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step,"blindness_hist"] * q_blindness ,
-      as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "amp_event"] * q_amp , 
-      as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "amp_event2"] * q_amp , 
-      as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "amp_hist"] * q_amp ,
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "chf_event"] * q_chf , 
-      as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "chf_hist"] * q_chf ,
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "esrd_event"] * q_esrd , 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "esrd_hist"] * q_esrd , 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ihd_event"] * q_ihd , 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ihd_hist"] * q_ihd , 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "mi_event"] * q_mi , 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "mi_hist"] * q_mi ,
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "stroke_event"] * q_stroke , 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "stroke_hist"] * q_stroke , 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ulcer_event"] * q_ulcer , 
-      as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ulcer_hist"] * q_ulcer )
-    m_summary[time_step, "disc_costs"] <- m_summary[time_step, "cost"] / (1 + discount_rate)^time_step
-    m_summary[time_step, "disc_qalys"] <- m_summary[time_step, "qalys"] / (1 + discount_rate)^time_step
-  }
-  
-
-
+  m_summary[time_step, "qalys"]<- as.double(m_other_ind_traits[time_step,"death"]==0)*q_baseline + min(
+    as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step,"blindness_event"] * q_blindness ,
+    as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step,"blindness_hist"] * q_blindness ,
+    as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "amp_event"] * q_amp , 
+    as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "amp_event2"] * q_amp , 
+    as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "amp_hist"] * q_amp ,
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "chf_event"] * q_chf , 
+    as.double(m_other_ind_traits[time_step,"death"]==0)*m_ind_traits[time_step, "chf_hist"] * q_chf ,
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "esrd_event"] * q_esrd , 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "esrd_hist"] * q_esrd , 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ihd_event"] * q_ihd , 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ihd_hist"] * q_ihd , 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "mi_event"] * q_mi , 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "mi_hist"] * q_mi ,
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "stroke_event"] * q_stroke , 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "stroke_hist"] * q_stroke , 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ulcer_event"] * q_ulcer , 
+    as.double(m_other_ind_traits[time_step,"death"]==0)* m_ind_traits[time_step, "ulcer_hist"] * q_ulcer )
+  m_summary[time_step, "disc_costs"] <- m_summary[time_step, "cost"] / (1 + discount_rate)^time_step
+  m_summary[time_step, "disc_qalys"] <- m_summary[time_step, "qalys"] / (1 + discount_rate)^time_step
+}
 
 patient_summary_file[patient,"cost"]<-sum(m_summary[,"cost"])
 patient_summary_file[patient,"disc_costs"]<-sum(m_summary[,"disc_costs"])
 patient_summary_file[patient,"qalys"]<-sum(m_summary[,"qalys"])
 patient_summary_file[patient,"disc_qalys"]<-sum(m_summary[,"disc_qalys"])
-}
-
-
-
 
 # Step 10: Summarize and visualize results
 # Calculate summary statistics
