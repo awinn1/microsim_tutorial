@@ -113,6 +113,7 @@ print(dimnames(a_ind_traits)) # to verify the dimension names
 
 #' Calculate Biomarkers 
 #'
+#' @details
 #' This function calculates patient-specific factors to predict the time path of
 #' a biomarker. 
 #'
@@ -161,6 +162,7 @@ biomarker <- function(
 
 #' Update Multiple Biomarkers in a Transition Matrix
 #'
+#' @details
 #' This function updates multiple biomarker values in the transition matrix for
 #' a given time step.
 #'
@@ -329,6 +331,7 @@ weibull_event <- function(
 
 #' Calculate Transition Probability Based on a Logistic Regression and Update Patient State 
 #'
+#' @details
 #' This function calculates patient-specific factors, cumulative hazards, 
 #' and the transition probability for a given health outcome (e.g., "ihd"). 
 #' The function updates the provided `m_ind_traits` matrix with the event occurrence 
