@@ -1,3 +1,9 @@
+# # Load functions ------------------------------------------------------------------------------------------------
+
+invisible(lapply(fs::dir_ls("cpp_functions"), Rcpp::sourceCpp))
+invisible(lapply(fs::dir_ls("functions"), source))
+
+
 # Model code used in the test -------------------------------------------------------------------------------------
 
 ## Coefficients dataset
@@ -134,7 +140,7 @@ microbenchmark::microbenchmark(
     m_coef_ukpds_other_ind_traits = m_coef_ukpds_other_ind_traits,
     health_outcome = health_outcome
   ),
-  times = 100
+  times = 1000
 )
 
 # logistic_event --------------------------------------------------------------------------------------------------
