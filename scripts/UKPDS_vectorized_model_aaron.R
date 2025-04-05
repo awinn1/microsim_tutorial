@@ -306,7 +306,7 @@ weibull_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome,
   trans_prob <- 1 - exp(cum_hazard_t - cum_hazard_t1)
   
   # Simulate whether the event occurs by comparing with a random uniform value
-  event <- trans_prob > runif(1)
+  event <- trans_prob > runif(nrow(a_ind_traits))
   
   # Return the updated matrix
   return(event)
@@ -340,7 +340,7 @@ logistic_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome
   trans_prob=1-(exp(-patient_factors)/(1+exp(-patient_factors)))^1
   
   # Simulate whether the event occurs by comparing with a random uniform value
-  event <- trans_prob > runif(1)
+  event <- trans_prob > runif(nrow(a_ind_traits))
   
   
   # Return the value
@@ -516,7 +516,7 @@ gompertz_event <- function(a_ind_traits, a_coef_ukpds_ind_traits, health_outcome
   trans_prob <- 1 - exp(cum_hazard_t - cum_hazard_t1)
   
   # Simulate whether the event occurs by comparing with a random uniform value
-  event <- trans_prob > runif(1)
+  event <- trans_prob > runif(nrow(a_ind_traits))
   
   # Return the updated matrix
   return(event)

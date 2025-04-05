@@ -38,7 +38,7 @@ gompertz_event2 <- function(
   trans_prob <- 1 - exp(cum_hazard_t - cum_hazard_t1)
 
   # Simulate whether the event occurs by comparing with a random uniform value
-  event <- (trans_prob > runif(1)) * 1
+  event <- (trans_prob > runif(nrow(m_ind_traits))) * 1 # to convert logical to numeric
   colnames(event) <- health_outcome
   # Return the updated matrix
   return(event)

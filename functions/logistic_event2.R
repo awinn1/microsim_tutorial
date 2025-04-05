@@ -23,7 +23,7 @@ logistic_event2 <- function(
   trans_prob <- 1 - (exp(-patient_factors) / (1 + exp(-patient_factors)))^1
 
   # Simulate whether the event occurs by comparing with a random uniform value
-  event <- (trans_prob > runif(1)) * 1 # to convert logical to numeric
+  event <- (trans_prob > runif(nrow(m_ind_traits))) * 1 # to convert logical to numeric
 
   # Return the value
   return(event)

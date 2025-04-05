@@ -322,7 +322,7 @@ weibull_event_w <- function(
   trans_prob <- 1 - exp(cum_hazard_t - cum_hazard_t1)
   
   # Simulate whether the event occurs by comparing with a random uniform value
-  event <- trans_prob > runif(1)
+  event <- trans_prob > runif(nrow(m_ind_traits_step))
   
   # Return the updated matrix
   return(event)
@@ -382,7 +382,7 @@ logistic_event_w <- function(
   trans_prob <- 1-(exp(-patient_factors)/(1+exp(-patient_factors)))^1
   
   # Simulate whether the event occurs by comparing with a random uniform value
-  event <- trans_prob > runif(1)
+  event <- trans_prob > runif(nrow(m_ind_traits_step))
   
   # Return the value
   return(event)
