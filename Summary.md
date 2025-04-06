@@ -1,12 +1,21 @@
-# Summary
+# Progress updates
 
-
-# About
-
-In this file, I will write what I have done in the repo in the past few
-days.
 
 # Changes
+
+## Updates April 6, 2025
+
+- I have modified the internal functions of the model and created new
+  ones (See my most recent commit).
+- What needs to be done
+  - Create an Rcpp version for `update_health_events`
+  - Modify `run_microsim_modelC.R` to work the modified functions.
+  - Run tests to compare the output validity and measure the improvement
+    in performance in the newly modified functions.
+
+------------------------------------------------------------------------
+
+## Updates March 31, 2025
 
 - I have changed the folder structure so functions are defined in
   different folders rather than being written inside the model script.
@@ -21,11 +30,14 @@ fs::dir_tree()
     ├── README.html
     ├── README.md
     ├── R_model_profiling.Rprofvis
+    ├── Summary.md
     ├── Summary.qmd
     ├── Summary.rmarkdown
     ├── cpp_functions
     │   ├── gompertz_eventC.cpp
     │   ├── logistic_eventC.cpp
+    │   ├── mortalityC.cpp
+    │   ├── update_biomarkersC.cpp
     │   └── weibull_eventC.cpp
     ├── data
     │   ├── population.csv
@@ -36,7 +48,6 @@ fs::dir_tree()
     │   ├── gompertz_event2.R
     │   ├── logistic_event2.R
     │   ├── mortality2.R
-    │   ├── mortalityC.R
     │   ├── run_microsim_model.R
     │   ├── run_microsim_modelC.R
     │   ├── update_biomarkers2.R
