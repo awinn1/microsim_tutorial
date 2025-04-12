@@ -123,16 +123,30 @@ m_coef_ukpds_ind_traits <- a_coef_ukpds_ind_traits[, , 1]
 m_coef_ukpds_other_ind_traits <- a_coef_ukpds_other_ind_traits[, , 1]
 health_outcome <- "amp1_no_ulcer"
 
-# weibull_event -----------------------------------------------------------------------------------------------
 
-
-
+# update_biomarkersC ----------------------------------------------------------------------------------------------
+# I did not notice much improvement with update_biomarkersC()
 microbenchmark::microbenchmark(
-  weibull_Cpp_result = weibull_eventC(
+  Cpp = update_biomarkersC(
     m_ind_traits = m_ind_traits,
     m_coef_ukpds_ind_traits = m_coef_ukpds_ind_traits,
-    m_coef_ukpds_other_ind_traits = m_coef_ukpds_other_ind_traits,
-    health_outcome = health_outcome
+    m_coef_ukpds_other_ind_traits = m_coef_ukpds_other_ind_traits
+  ),
+  R = update_biomarkers2(
+    m_ind_traits = m_ind_traits,
+    m_coef_ukpds_ind_traits = m_coef_ukpds_ind_traits,
+    m_coef_ukpds_other_ind_traits = m_coef_ukpds_other_ind_traits
+  ),
+  times = 1000
+)
+
+# weibull_event -----------------------------------------------------------------------------------------------
+microbenchmark::microbenchmark(
+  weibull_Cpp_result = weibull_eventC(
+    m_ind_traits,
+    m_coef_ukpds_ind_traits,
+    m_coef_ukpds_other_ind_traits,
+    match(health_outcome, colnames(m_coef_ukpds_ind_traits))
   ),
   weibull_R_result = weibull_event2(
     m_ind_traits = m_ind_traits,
@@ -140,22 +154,22 @@ microbenchmark::microbenchmark(
     m_coef_ukpds_other_ind_traits = m_coef_ukpds_other_ind_traits,
     health_outcome = health_outcome
   ),
-  times = 1000
+  times = 100
 )
 
 # logistic_event --------------------------------------------------------------------------------------------------
 microbenchmark::microbenchmark(
   logistic_Cpp_result = logistic_eventC(
-    m_ind_traits = m_ind_traits,
-    m_coef_ukpds_ind_traits = m_coef_ukpds_ind_traits,
-    m_coef_ukpds_other_ind_traits = m_coef_ukpds_other_ind_traits,
-    health_outcome = health_outcome
+    m_ind_traits,
+    m_coef_ukpds_ind_traits,
+    m_coef_ukpds_other_ind_traits,
+    match("ulcer", colnames(m_coef_ukpds_ind_traits))
   ),
   logistic_R_result = logistic_event2(
     m_ind_traits = m_ind_traits,
     m_coef_ukpds_ind_traits = m_coef_ukpds_ind_traits,
     m_coef_ukpds_other_ind_traits = m_coef_ukpds_other_ind_traits,
-    health_outcome = health_outcome
+    health_outcome = "ulcer"
   ),
   times = 100
 )
@@ -174,7 +188,7 @@ microbenchmark::microbenchmark(
     m_ind_traits,
     m_coef_ukpds_ind_traits,
     m_coef_ukpds_other_ind_traits,
-    health_outcome = "death_nhne"
+    match("death_nhne", colnames(m_coef_ukpds_ind_traits))
   ),
   times = 100
 )
