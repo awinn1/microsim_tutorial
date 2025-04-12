@@ -8,51 +8,53 @@ using namespace arma;
 
 auto gompertz_eventC(
     arma::mat& m_ind_traits,  
-    arma::mat& m_coef_ukpds_ind_traits,
-    arma::mat& m_coef_ukpds_other_ind_traits,
+    const arma::mat& m_coef_ukpds_ind_traits,
+    const arma::mat& m_coef_ukpds_other_ind_traits,
     int health_outcome_index
 ) {
+  
+  // Setup
+  int n_rows = m_ind_traits.n_rows; // Number of individuals/rows
+  int idx = health_outcome_index - 1; // Adjust index
+  
   // Extract the coefficient column
-  arma::vec coef = m_coef_ukpds_ind_traits.col(health_outcome_index - 1);
+  arma::vec coef = m_coef_ukpds_ind_traits.col(idx);
   
-  // Matrix multiplication to get the first part of patient_factors
-  arma::mat p1 = m_ind_traits * coef;
+  // Extract parameters
+  double lambda = m_coef_ukpds_other_ind_traits(0, idx);
+  double rho = m_coef_ukpds_other_ind_traits(1, idx);
+  double inv_rho = 1.0 / rho;
   
-  // Extract lambda from m_coef_ukpds_other_ind_traits related to the health_outcome
-  double lambda = m_coef_ukpds_other_ind_traits(0, health_outcome_index - 1);
+  // Extract age column
+  const arma::vec& age = arma::vec(m_ind_traits.col(0));
+  arma::vec age1 = age + 1;
   
-  // Calculate patient_factors
-  arma::mat patient_factors = p1 + lambda;
+  // Gompertz model calculations -----
+  arma::vec patient_factors = m_ind_traits * coef;
+  patient_factors += lambda;
+  arma::vec patient_factors_exp = arma::exp(patient_factors);
   
-  // Exponentiate patient_factors
-  arma::mat patient_factors_exp = arma::exp(patient_factors);
-  
-  // Extract rho and inverse rho
-  double rho = m_coef_ukpds_other_ind_traits(1, health_outcome_index - 1);
-  double inv_rho = 1 / arma::as_scalar(rho);
   
   // Compute cumulative hazard at time t
-  arma::vec age = arma::vec(m_ind_traits.col(0));
-  arma::mat p3 = arma::exp(age*rho)-1;
-  arma::mat cum_hazard_t = inv_rho*(patient_factors_exp%p3);
+  arma::mat p_t0 = arma::exp(age*rho) - 1.0;
+  arma::mat cum_hazard_t = inv_rho*(patient_factors_exp%p_t0);
   
   // Compute cumulative hazard at time t+1
-  arma::vec age1 = arma::vec(m_ind_traits.col(0)+1);
-  arma::mat p3t1 = arma::exp(age1*rho)-1;
-  arma::mat cum_hazard_t1 = inv_rho*(patient_factors_exp%p3t1);
+  arma::mat p_t1 = arma::exp(age1*rho) - 1.0;
+  arma::mat cum_hazard_t1 = inv_rho*(patient_factors_exp%p_t1);
   
   // Calculate transition probability
-  arma::mat diff_cum_hazard = arma::exp(cum_hazard_t - cum_hazard_t1);
-  arma::mat trans_prob = 1 - diff_cum_hazard;
+  arma::mat trans_prob = 1 - arma::exp(cum_hazard_t - cum_hazard_t1);
   
   // Generate a matrix of random numbers from a uniform distribution
-  arma::mat random_numbers = arma::randu(m_ind_traits.n_rows, 1);
+  arma::mat random_numbers = arma::randu(n_rows, 1);
   
-  // Assign column name
+  // Determine event occurrence
   arma::umat event = trans_prob > random_numbers;
   
   return event;
 }
+
 
 auto logistic_eventC(
     arma::mat& m_ind_traits,  
@@ -61,26 +63,27 @@ auto logistic_eventC(
     int health_outcome_index
 ) {
   
+  // Setup
+  int n_rows = m_ind_traits.n_rows; // Number of individuals/rows
+  int idx = health_outcome_index - 1; // Adjust index
+  
   // Extract the coefficient column
-  arma::vec coef = m_coef_ukpds_ind_traits.col(health_outcome_index - 1);
+  arma::vec coef = m_coef_ukpds_ind_traits.col(idx);
   
-  // Matrix multiplication to get the first part of patient_factors
-  arma::mat p1 = m_ind_traits * coef;
+  // Extract constants
+  double lambda = m_coef_ukpds_other_ind_traits(0, idx);
   
-  // Extract lambda from m_coef_ukpds_other_ind_traits related to the health_outcome
-  double lambda = m_coef_ukpds_other_ind_traits(0, health_outcome_index - 1);
+  // Logistic model calculations
   
-  // Calculate patient_factors
-  arma::mat patient_factors = p1 + lambda;
-  
-  // Exponentiate patient_factors
-  arma::mat patient_factors_exp = arma::exp(-patient_factors);
+  arma::vec patient_factors = m_ind_traits * coef;
+  patient_factors += lambda;
+  arma::vec patient_factors_exp = arma::exp(-patient_factors);
   
   // Calculate transition probability
   arma::mat trans_prob = 1 - (patient_factors_exp/ (1 + patient_factors_exp));
   
   // Generate a matrix of random numbers from a uniform distribution
-  arma::mat random_numbers = arma::randu(m_ind_traits.n_rows, 1);
+  arma::mat random_numbers = arma::randu(n_rows, 1);
   
   arma::umat event = trans_prob > random_numbers;
   
@@ -96,6 +99,8 @@ auto mortalityC(
     arma::mat& m_coef_ukpds_ind_traits,
     arma::mat& m_coef_ukpds_other_ind_traits
 ) {
+  // Setup
+  int n_rows = m_ind_traits.n_rows; // Number of individuals/rows
   
   arma::uvec event_col_ids = {43, 47, 49, 51, 53, 55, 58, 60}; // indices for event columns
   arma::uvec hist_col_ids = {45, 48, 50, 52, 54, 56, 59, 61}; // indices for history columns
@@ -107,51 +112,58 @@ auto mortalityC(
   double any_history = m_ind_traits.cols(hist_col_ids).max();
   
   // Determine event-history combinations
-  double nhne = (new_event == 0) && (any_history == 0); // No history, no event
-  double yhne = (new_event == 0) && (any_history == 1); // Yes history, no event
-  double nhye = (new_event == 1) && (any_history == 0); // No history, new event
-  double yhye = (new_event == 1) && (any_history == 1); // Yes history, new event
+  bool nhne = (new_event == 0) && (any_history == 0); // No history, no event
+  bool yhne = (new_event == 0) && (any_history == 1); // Yes history, no event
+  bool nhye = (new_event == 1) && (any_history == 0); // No history, new event
+  bool yhye = (new_event == 1) && (any_history == 1); // Yes history, new event
+  
+  arma::mat new_death;  // To store the newly computed mortality status
   
   // Mortality calculations using Gompertz and logistic models
-  int health_outcome_index = 22; // Put the original index not the cpp index
-  auto death_nhne = gompertz_eventC(
-    m_ind_traits,
-    m_coef_ukpds_ind_traits,
-    m_coef_ukpds_other_ind_traits,
-    health_outcome_index
-  );
-  
-  int health_outcome_index2 = 24; // Put the original index not the cpp index
-  auto death_yhne = gompertz_eventC(
-    m_ind_traits,
-    m_coef_ukpds_ind_traits,
-    m_coef_ukpds_other_ind_traits,
-    health_outcome_index2
-  );
-
-  int health_outcome_index3 = 23; // Put the original index not the cpp index
-  auto death_nhye = logistic_eventC(
-    m_ind_traits,
-    m_coef_ukpds_ind_traits,
-    m_coef_ukpds_other_ind_traits,
-    health_outcome_index3
-  );
-
-  int health_outcome_index4 = 25; // Put the original index not the cpp index
-  auto death_yhye = logistic_eventC(
-    m_ind_traits,
-    m_coef_ukpds_ind_traits,
-    m_coef_ukpds_other_ind_traits,
-    health_outcome_index4
-  );  
-  
-  // Calculate new mortality status
-  arma::mat new_death =
-    nhne * arma::conv_to<arma::mat>::from(death_nhne) +
-    yhne * arma::conv_to<arma::mat>::from(death_yhne) +
-    nhye * arma::conv_to<arma::mat>::from(death_nhye) +
-    yhye * arma::conv_to<arma::mat>::from(death_yhye);
-  
+  if(nhne) {
+    int health_outcome_index = 22; // Use the original (R) index for this scenario
+    auto death_nhne = gompertz_eventC(
+      m_ind_traits,
+      m_coef_ukpds_ind_traits,
+      m_coef_ukpds_other_ind_traits,
+      health_outcome_index
+    );
+    new_death = arma::conv_to<arma::mat>::from(death_nhne);
+    
+  } else if(yhne) {
+    int health_outcome_index = 24; // Use the original (R) index for this scenario
+    auto death_yhne = gompertz_eventC(
+      m_ind_traits,
+      m_coef_ukpds_ind_traits,
+      m_coef_ukpds_other_ind_traits,
+      health_outcome_index
+    );
+    new_death = arma::conv_to<arma::mat>::from(death_yhne);
+    
+  } else if(nhye) {
+    int health_outcome_index = 23; // Use the original (R) index for this scenario
+    auto death_nhye = logistic_eventC(
+      m_ind_traits,
+      m_coef_ukpds_ind_traits,
+      m_coef_ukpds_other_ind_traits,
+      health_outcome_index
+    );
+    new_death = arma::conv_to<arma::mat>::from(death_nhye);
+    
+  } else if(yhye) {
+    int health_outcome_index = 25; // Use the original (R) index for this scenario
+    auto death_yhye = logistic_eventC(
+      m_ind_traits,
+      m_coef_ukpds_ind_traits,
+      m_coef_ukpds_other_ind_traits,
+      health_outcome_index
+    );
+    new_death = arma::conv_to<arma::mat>::from(death_yhye);
+    
+  } else {
+    // In case conditions do not match, default to zero mortality
+    new_death = arma::zeros<arma::mat>(n_rows, 1);
+  }
   // pdate the mortality status in the matrix
   m_other_ind_traits.col(2) = new_death + m_other_ind_traits_previous.col(2);
   
