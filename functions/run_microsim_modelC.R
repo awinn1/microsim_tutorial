@@ -161,15 +161,6 @@ run_microsim_modelC <- \(
     v_time_invariant_characteristics,
   ] <- as.matrix(df_ukpds_pop[, v_time_invariant_characteristics])
   
-  # Fill baseline values of the first cycle
-  a_all_ind_traits[, , 1] <- as.matrix(df_ukpds_pop[, -1])
-  
-  # slice columns 1:62 (0-based indices 0 to 61)
-  a_ind_traits_ <- subcols_array(a_all_ind_traits, 0L, 61L)
-  
-  # slice columns 63:65 (0-based indices 62 to 64)
-  a_other_traits_ <- subcols_array(a_all_ind_traits, 62L, 64L)
-  
   # break array up into stuff individual traits
   a_ind_traits <- a_all_ind_traits[, 1:62, ]
   # remaining array that captures lambda, rho and death
