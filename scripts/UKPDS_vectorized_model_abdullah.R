@@ -85,5 +85,16 @@ microbenchmark::microbenchmark(
     df_ukpds_pop = df_ukpds_pop,
     cycles = 20
   ),
+  C_version_ = run_microsim_modelC_(
+    df_UKPDS_coef = df_UKPDS_coef,
+    df_ukpds_pop = df_ukpds_pop,
+    cycles = 20
+  ),
   times = 10
 )
+
+# Unit: seconds
+# expr      min       lq     mean   median       uq      max neval cld
+# R_version 21.50588 21.69286 22.10138 22.12198 22.39955 22.82267    10 a  
+# C_version 15.16500 15.24527 15.49386 15.40470 15.46595 16.22329    10  b 
+# C_version_ 16.27054 16.37046 16.59425 16.47167 16.96492 17.10800    10   c

@@ -8,7 +8,7 @@
 #' @export
 #'
 #' @examples
-update_health_eventsC <- function(
+update_health_eventsC_ <- function(
     m_ind_traits,
     m_coef_ukpds_ind_traits,
     m_coef_ukpds_other_ind_traits) {
